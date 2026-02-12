@@ -10,6 +10,7 @@ class vec3{
 
 		vec3() : e{ 0,0,0 } {}
 		vec3(double e0, double e1, double e2) : e{ e0, e1, e2 } {}
+		vec3(double allVal) : e{ allVal, allVal, allVal } {}
 
 		double x() const { return e[0]; }
 		double y() const { return e[1]; }
