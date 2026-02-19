@@ -31,26 +31,6 @@ public:
 
 
 
-	void render(const hittable& world, char* outfile) {
-        //Start render timer
-        auto start_time = std::chrono::steady_clock::now();
-
-        //Render Loop
-        initialize();
-        std::vector<uint8_t> pixels(img_height * img_width * 3);
-        render_rows(0, img_height, world, pixels);
-
-        //Output into render directory
-        std::string outdirectory = "out/Renders/" + std::string(outfile);
-
-        stbi_write_png(outdirectory.c_str(), img_width, img_height, 3, pixels.data(), img_width * 3);
-        std::clog << "\rDone!                       \n";
-        
-        //Tracks render time and prints
-        auto end_time = std::chrono::steady_clock::now();
-        print_render_time(end_time - start_time);
-	}
-
     void render_rows(int y_start, int y_end, const hittable& world, std::vector<uint8_t>& pixels) {
         //Render specified rows for multithreading/parralelization
         for (int y = y_start; y < y_end; ++y) {
@@ -64,6 +44,42 @@ public:
             }
         }
     }
+
+	void render(const hittable& world, char* outfile) {
+        //Start render timer
+        auto start_time = std::chrono::steady_clock::now();
+
+        //Render Loop
+        initialize();
+        std::vector<uint8_t> pixels(img_height * img_width * 3);
+        
+        
+        int num_threads = std::thread::hardware_concurrency();
+        std::vector<std::thread> threads;
+        int rows_per_thread = img_height / num_threads; 
+
+        for (int i = 0; i < num_threads; i++) {
+            int y_start = i * rows_per_thread;
+            int y_end = (i == num_threads - 1) ? img_height : y_start + rows_per_thread;
+            threads.emplace_back([this, y_start, y_end, &world, &pixels]() {
+                render_rows(y_start, y_end, world, pixels);
+                });
+
+        }
+        //render_rows(0, img_height, world, pixels);
+
+        for (auto& t : threads) t.join();
+
+        //Output into render directory
+        std::string outdirectory = "out/Renders/" + std::string(outfile);
+
+        stbi_write_png(outdirectory.c_str(), img_width, img_height, 3, pixels.data(), img_width * 3);
+        std::clog << "\rDone!                       \n";
+        
+        //Tracks render time and prints
+        auto end_time = std::chrono::steady_clock::now();
+        print_render_time(end_time - start_time);
+	}
 
 
 private:
