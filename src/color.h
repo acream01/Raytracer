@@ -1,6 +1,9 @@
 #ifndef COLOR_H
 #define COLOR_H
 
+#include <vector>
+#include <cstdint>
+
 #include "interval.h"
 #include "vec3.h"
 
@@ -14,7 +17,7 @@ inline double linear_to_gamma(double linear_component) {
 	return 0;
 }
 
-void write_color(std::ostream& out, const color& pixel_color) {
+void write_color(std::vector<uint8_t>& pixels, const color& pixel_color) {
 	auto r = pixel_color.x();
 	auto g = pixel_color.y();
 	auto b = pixel_color.z();
@@ -33,7 +36,10 @@ void write_color(std::ostream& out, const color& pixel_color) {
 
 
 	// Write out the pixel color components
-	out << rbyte << ' ' << gbyte << ' ' << bbyte << '\n';
+	//out << rbyte << ' ' << gbyte << ' ' << bbyte << '\n';
+	pixels.push_back(static_cast<uint8_t>(rbyte));
+	pixels.push_back(static_cast<uint8_t>(gbyte));
+	pixels.push_back(static_cast<uint8_t>(bbyte));
 
 }
 

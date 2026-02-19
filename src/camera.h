@@ -1,8 +1,16 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include "vector"
+#include <cstdint>      // for uint8_t
+#include <iostream>     // for std::clog
+
+
+#include "color.h"
 #include "hittable.h"
 #include "material.h"
+#include "ray.h"
+#include <chrono>
 
 class camera {
 public:
@@ -22,10 +30,13 @@ public:
 
 
 
-	void render(const hittable& world) {
+	void render(const hittable& world, char* outfile) {
+        auto start = std::chrono::steady_clock::now();
         initialize();
-
-        std::cout << "P3\n" << img_width << ' ' << img_height << "\n255\n";
+        std::vector<uint8_t> pixels;
+        pixels.reserve(img_height * img_width * 3);
+        // DELETE
+         //std::cout << "P3\n" << img_width << ' ' << img_height << "\n255\n";
         
         for (int j = 0; j < img_height; j++) {
             std::clog << "\rScanlines Remaining: " << (img_height - j) << ' ' << std::flush;
@@ -35,12 +46,17 @@ public:
                     ray r = get_ray(i, j);
                     pixel_color += ray_color(r, max_depth, world);
                 }
-                write_color(std::cout, pixel_samples_scale * pixel_color);
+                write_color(pixels, pixel_samples_scale * pixel_color);
             }
 
         }
-
+        std::string outdirectory = "out/Renders/" + std::string(outfile);
+        stbi_write_png(outdirectory.c_str(), img_width, img_height, 3, pixels.data(), img_width * 3);
         std::clog << "\rDone!                       \n";
+        auto end = std::chrono::steady_clock::now();
+        std::chrono::duration<double> duration = end - start;
+        
+        std::cout << "Render time : " << duration.count() << " seconds\n";
 
 	}
 
@@ -131,6 +147,7 @@ private:
             return color(0, 0, 0);
 
         hit_record rec;
+        
         if (world.hit(r, interval(0.001, infinity), rec)) {
             ray scattered;
             color attenuation;

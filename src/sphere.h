@@ -40,7 +40,7 @@ public:
 
 
 private:
-	point3 center;
+	point3 center; 
 	double radius;
 	shared_ptr<material> mat;
 
