@@ -11,7 +11,7 @@
 #include "sphere.h"
 
 
-bool check_file_extention(char* outfile);
+
 
 int main(int argc, char* argv[]) {
     //World
@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
     camera cam;
     cam.aspect_ratio = 16.0 / 9.0;
     cam.img_width = 400;
-    cam.samples_per_pixel = 100;
+    cam.samples_per_pixel = 300;
     cam.max_depth = 10;
 
     cam.vfov = 60;
@@ -99,13 +99,3 @@ int main(int argc, char* argv[]) {
         cam.render(world, "output.png");
 }
 
-bool check_file_extention(char* outfile) {
-    std::string fileExt = std::string(outfile);
-    int len = fileExt.length();
-
-    if (len > 4 && fileExt.compare((len - 4), 4, ".png") == 0) {
-        return true;
-    }
-    std::cout << "Unaccepted file extention. Writing to output.png...\n";
-    return false;
-}

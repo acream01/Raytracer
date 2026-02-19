@@ -32,6 +32,17 @@ inline double random_double(double min, double max) {
 	return min + (max - min) * random_double();
 }
 
+bool check_file_extention(char* outfile) {
+    std::string fileExt = std::string(outfile);
+    int len = fileExt.length();
+
+    if (len > 4 && fileExt.compare((len - 4), 4, ".png") == 0) {
+        return true;
+    }
+    std::cout << "Unaccepted file extention. Writing to output.png...\n";
+    return false;
+}
+
 //common headers
 
 #include "color.h"

@@ -31,15 +31,15 @@ public:
 
 
 	void render(const hittable& world, char* outfile) {
-        auto start = std::chrono::steady_clock::now();
+        //Start render timer
+        auto start_time = std::chrono::steady_clock::now();
+
+        //Render Loop
         initialize();
         std::vector<uint8_t> pixels;
         pixels.reserve(img_height * img_width * 3);
-        // DELETE
-         //std::cout << "P3\n" << img_width << ' ' << img_height << "\n255\n";
-        
         for (int j = 0; j < img_height; j++) {
-            std::clog << "\rScanlines Remaining: " << (img_height - j) << ' ' << std::flush;
+            std::clog << "\rScanlines Remaining: " << (img_height - j) << ' ' << std::flush; //Progress bar
             for (int i = 0; i < img_width; i++) {
                 color pixel_color(0, 0, 0);
                 for (int sample = 0; sample < samples_per_pixel; sample++) {
@@ -48,16 +48,14 @@ public:
                 }
                 write_color(pixels, pixel_samples_scale * pixel_color);
             }
-
         }
         std::string outdirectory = "out/Renders/" + std::string(outfile);
         stbi_write_png(outdirectory.c_str(), img_width, img_height, 3, pixels.data(), img_width * 3);
         std::clog << "\rDone!                       \n";
-        auto end = std::chrono::steady_clock::now();
-        std::chrono::duration<double> duration = end - start;
         
-        std::cout << "Render time : " << duration.count() << " seconds\n";
-
+        //Tracks render time and prints
+        auto end_time = std::chrono::steady_clock::now();
+        print_render_time(end_time - start_time);
 	}
 
 
@@ -136,7 +134,7 @@ private:
     }
 
     point3 defocus_disk_sample() const {
-    // Return a random point in the camera defocus disk
+        // Return a random point in the camera defocus disk
         auto p = random_in_unit_disk();
         return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
     }
@@ -159,6 +157,30 @@ private:
         vec3 unit_direction = unit_vector(r.direction());
         auto a = 0.5*(unit_direction.y() + 1.0);
         return (1.0 - a) * color(1.0, 1.0, 1.0) + a * color(0.5, 0.7, 1.0);
+    }
+
+    void print_render_time(std::chrono::duration<double> duration) {
+        double remainder = duration.count();
+        std::cout << "Render time :";
+        
+        //Seperate hours
+        int hours = (int)remainder / (3600);
+        if (hours > 0)
+            std::cout << ' ' << hours << " hour";
+        if (hours > 1)
+            std::cout << "s";
+        remainder = remainder - 3600 * hours;
+
+        //Seperate minutes
+        int minutes = (int)remainder / 60;
+        if (minutes > 0)
+            std::cout << ' ' << minutes << " minute";
+        if (minutes > 1)
+            std::cout << "s";
+        remainder = remainder - 60 * minutes;
+        
+        //Print remainding seconds
+        std::cout << ' ' << remainder << " seconds" << std::endl;
     }
 };
 
