@@ -80,7 +80,9 @@ int main(int argc, char* argv[]) {
     camera cam;
     cam.aspect_ratio = 16.0 / 9.0;
     cam.img_width = 400;
-    cam.samples_per_pixel = 300;
+    cam.samples_per_pixel = 100;
+    //400 samples per pixel benchmark 1 minute 15.7052 seconds pre threads
+    //100 samples per pixel benchmark 25.5386 seconds pre threads
     cam.max_depth = 10;
 
     cam.vfov = 60;
