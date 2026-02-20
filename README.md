@@ -14,5 +14,5 @@ If no acceptable filename is provided with the correct file extention, output wi
 
 To build, compile in VisualStudio with C++ development tools
 
-![Example Render](out/Renders/FinalV3.png)
+![Example Render](images/FinalRenderV3.png)
 
