@@ -51,6 +51,8 @@ public:
 
         //Render Loop
         initialize();
+        std::atomic<int> tiles_done{0};
+
         std::vector<uint8_t> pixels(img_height * img_width * 3);
         
         
@@ -68,7 +70,11 @@ public:
         }
         //render_rows(0, img_height, world, pixels);
 
-        for (auto& t : threads) t.join();
+        for (auto& t : threads) {
+            t.join();
+            num_threads--;
+            std::clog << '\r' << num_threads << " threads remaining to return" << std::flush;
+        }
 
         //Output into render directory
         std::string outdirectory = "out/Renders/" + std::string(outfile);
