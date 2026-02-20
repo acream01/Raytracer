@@ -2,6 +2,7 @@
 #define CAMERA_H
 
 #include "vector"
+#include "thread"       // for multithreading
 #include <cstdint>      // for uint8_t
 #include <iostream>     // for std::clog
 
@@ -30,26 +31,48 @@ public:
 
 
 
+    void render_rows(int y_start, int y_end, const hittable& world, std::vector<uint8_t>& pixels) {
+        //Render specified rows for multithreading/parralelization
+        for (int y = y_start; y < y_end; ++y) {
+            for (int x = 0; x < img_width; ++x) {
+                color pixel_color(0, 0, 0);
+                for (int sample = 0; sample < samples_per_pixel; sample++) {
+                    ray r = get_ray(x, y);
+                    pixel_color += ray_color(r, max_depth, world);
+                }
+                write_color(pixels, pixel_samples_scale * pixel_color, x, y, img_width);
+            }
+        }
+    }
+
 	void render(const hittable& world, char* outfile) {
         //Start render timer
         auto start_time = std::chrono::steady_clock::now();
 
         //Render Loop
         initialize();
-        std::vector<uint8_t> pixels;
-        pixels.reserve(img_height * img_width * 3);
-        for (int j = 0; j < img_height; j++) {
-            std::clog << "\rScanlines Remaining: " << (img_height - j) << ' ' << std::flush; //Progress bar
-            for (int i = 0; i < img_width; i++) {
-                color pixel_color(0, 0, 0);
-                for (int sample = 0; sample < samples_per_pixel; sample++) {
-                    ray r = get_ray(i, j);
-                    pixel_color += ray_color(r, max_depth, world);
-                }
-                write_color(pixels, pixel_samples_scale * pixel_color);
-            }
+        std::vector<uint8_t> pixels(img_height * img_width * 3);
+        
+        
+        int num_threads = std::thread::hardware_concurrency();
+        std::vector<std::thread> threads;
+        int rows_per_thread = img_height / num_threads; 
+
+        for (int i = 0; i < num_threads; i++) {
+            int y_start = i * rows_per_thread;
+            int y_end = (i == num_threads - 1) ? img_height : y_start + rows_per_thread;
+            threads.emplace_back([this, y_start, y_end, &world, &pixels]() {
+                render_rows(y_start, y_end, world, pixels);
+                });
+
         }
+        //render_rows(0, img_height, world, pixels);
+
+        for (auto& t : threads) t.join();
+
+        //Output into render directory
         std::string outdirectory = "out/Renders/" + std::string(outfile);
+
         stbi_write_png(outdirectory.c_str(), img_width, img_height, 3, pixels.data(), img_width * 3);
         std::clog << "\rDone!                       \n";
         
