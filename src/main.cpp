@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     //World
     hittable_list world;
 
-    /*
+    
     auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
     world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, ground_material));
     
@@ -60,9 +60,9 @@ int main(int argc, char* argv[]) {
 
     auto material3 = make_shared<metal>(color(0.7, 0.6, 0.5), 0.0);
     world.add(make_shared<sphere>(point3(4, 1, 0), 1.0, material3));
-    */
     
     
+    /*
     auto material_ground = make_shared<lambertian>(color(0.0, 0.8, 0.8));
     auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
     auto material_left = make_shared<dielectric>(1.50);
@@ -74,24 +74,25 @@ int main(int argc, char* argv[]) {
     world.add(make_shared<sphere>(point3(-4.0, 0, -1.0), 1.0, material_left));
     world.add(make_shared<sphere>(point3(-1.0, 0, -1.0), 0.4, material_bubble));
     world.add(make_shared<sphere>(point3(1.0, 0, -1.0), 0.5, material_right));
+    */
     
     
 
     camera cam;
     cam.aspect_ratio = 16.0 / 9.0;
-    cam.img_width = 400;
-    cam.samples_per_pixel = 400;
-    //400 samples per pixel benchmark 1 minute 15.7052 seconds pre threads
+    cam.img_width = 1200;
+    cam.samples_per_pixel = 500;
+    //400 samples per pixel benchmark 1 minute 15.7052 seconds pre threads > 17.2777 seconds w/ multithreading!
     //100 samples per pixel benchmark 25.5386 seconds pre threads
-    cam.max_depth = 10;
+    cam.max_depth = 50;
 
-    cam.vfov = 60;
-    cam.lookfrom = point3(1.5, 1, 2);
-    cam.lookat = point3(0, 0, -1);
+    cam.vfov = 20;
+    cam.lookfrom = point3(13, 2, 3);
+    cam.lookat = point3(0, 0, 0);
     cam.up = vec3(0, 1, 0);
 
     cam.defocus_angle = 0.6;
-    cam.focus_dist = 3.0;
+    cam.focus_dist = 10.0;
 
 
     if (argc > 1 && check_file_extention(argv[1])) {
