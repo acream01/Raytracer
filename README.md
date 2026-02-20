@@ -13,3 +13,6 @@ Output will be found in the ./out/Renders folder
 If no acceptable filename is provided with the correct file extention, output will instead be written to output.png
 
 To build, compile in VisualStudio with C++ development tools
+
+![Example Render](out/Renders/FinalV3.png)
+
