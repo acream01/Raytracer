@@ -31,7 +31,7 @@ public:
 
 
 
-    void render_rows(int y_start, int y_end, const hittable& world, std::vector<uint8_t>& pixels) {
+    void render_rows(int y_start, int y_end, const hittable& world, std::vector<uint8_t>& pixels, std::atomic_int& rows_done) {
         //Render specified rows for multithreading/parralelization
         for (int y = y_start; y < y_end; ++y) {
             for (int x = 0; x < img_width; ++x) {
@@ -42,6 +42,8 @@ public:
                 }
                 write_color(pixels, pixel_samples_scale * pixel_color, x, y, img_width);
             }
+            rows_done++;
+            std::clog << '\r' << "Rows Remaining: " << img_height - rows_done << "              " << std::flush;
         }
     }
 
@@ -50,10 +52,10 @@ public:
         auto start_time = std::chrono::steady_clock::now();
 
         //Render Loop
+        std::clog << "Starting Render..." << std::flush;
         initialize();
-        std::atomic<int> tiles_done{0};
-
-        std::vector<uint8_t> pixels(img_height * img_width * 3);
+        std::atomic_int rows_done = 0; //Counter reported to by all threads
+        std::vector<uint8_t> pixels(img_height * img_width * 3); //Pixel Buffer 
         
         
         int num_threads = std::thread::hardware_concurrency();
@@ -63,8 +65,8 @@ public:
         for (int i = 0; i < num_threads; i++) {
             int y_start = i * rows_per_thread;
             int y_end = (i == num_threads - 1) ? img_height : y_start + rows_per_thread;
-            threads.emplace_back([this, y_start, y_end, &world, &pixels]() {
-                render_rows(y_start, y_end, world, pixels);
+            threads.emplace_back([this, y_start, y_end, &world, &pixels, &rows_done]() {
+                render_rows(y_start, y_end, world, pixels, rows_done);
                 });
 
         }
@@ -73,14 +75,15 @@ public:
         for (auto& t : threads) {
             t.join();
             num_threads--;
-            std::clog << '\r' << num_threads << " threads remaining to return" << std::flush;
+            //std::clog << '\r' << num_threads << " threads remaining to return" << std::flush;
         }
 
         //Output into render directory
         std::string outdirectory = "out/Renders/" + std::string(outfile);
 
         stbi_write_png(outdirectory.c_str(), img_width, img_height, 3, pixels.data(), img_width * 3);
-        std::clog << "\rDone!                       \n";
+        std::clog << "\rDone!                                \n";
+        std::cout << "Render Output To ./" << outdirectory << '\n';
         
         //Tracks render time and prints
         auto end_time = std::chrono::steady_clock::now();
@@ -153,8 +156,9 @@ private:
             + ((j + offset.y()) * pixel_delta_v);
         auto ray_origin = (defocus_angle <= 0) ? center : defocus_disk_sample();
         auto ray_direction = pixel_sample - ray_origin;
+        auto ray_time = random_double(); //Rays are taken accross the course of a second [0s - 1s] by random distribution
 
-        return ray(ray_origin, ray_direction);
+        return ray(ray_origin, ray_direction, ray_time);
     }
 
     vec3 sample_square() const{

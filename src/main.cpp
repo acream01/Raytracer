@@ -10,7 +10,7 @@
 #include "material.h"
 #include "sphere.h"
 
-
+//Current Chapter: 3 Bounding Volume Hierarchies
 
 
 int main(int argc, char* argv[]) {
@@ -33,7 +33,8 @@ int main(int argc, char* argv[]) {
                     //diffuse
                     auto albedo = color::random() * color::random();
                     sphere_material = make_shared <lambertian>(albedo);
-                    world.add(make_shared<sphere>(center, 0.2, sphere_material));
+                    auto center2 = center + vec3(0, random_double(0, 0.5), 0);
+                    world.add(make_shared<sphere>(center, center2, 0.2, sphere_material));
                 }
                 else if (choose_mat < 0.95) {
                     //metal
@@ -62,6 +63,7 @@ int main(int argc, char* argv[]) {
     world.add(make_shared<sphere>(point3(4, 1, 0), 1.0, material3));
     
     
+    
     /*
     auto material_ground = make_shared<lambertian>(color(0.0, 0.8, 0.8));
     auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
@@ -77,13 +79,12 @@ int main(int argc, char* argv[]) {
     */
     
     
+    
 
     camera cam;
     cam.aspect_ratio = 16.0 / 9.0;
-    cam.img_width = 1200;
-    cam.samples_per_pixel = 500;
-    //400 samples per pixel benchmark 1 minute 15.7052 seconds pre threads > 17.2777 seconds w/ multithreading!
-    //100 samples per pixel benchmark 25.5386 seconds pre threads
+    cam.img_width = 400;
+    cam.samples_per_pixel = 100;
     cam.max_depth = 50;
 
     cam.vfov = 20;
