@@ -32,6 +32,11 @@ inline double random_double(double min, double max) {
 	return min + (max - min) * random_double();
 }
 
+inline int random_int(int min, int max) {
+    //Returns a random integer in [min,max]
+    return int(random_double(min, max + 1));
+}
+
 bool check_file_extention(char* outfile) {
     std::string fileExt = std::string(outfile);
     int len = fileExt.length();
