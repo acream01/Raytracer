@@ -10,18 +10,14 @@
 #include "hittable_list.h"
 #include "material.h"
 #include "sphere.h"
+#include "texture.h"
 
-//Current Chapter: 3.8 Bounding Volume Hierarchies
+// Scenes
+void bouncing_spheres(hittable_list& world, camera& cam) {
+    //Bouncing Sphere Scene
+    auto checker = make_shared<checker_texture>(0.32, color(.2, .3, .1), color(.9, .9, .9));
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(checker)));
 
-
-int main(int argc, char* argv[]) {
-    //World
-    hittable_list world;
-
-    
-    auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
-    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, ground_material));
-    
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
             auto choose_mat = random_double();
@@ -51,7 +47,7 @@ int main(int argc, char* argv[]) {
                 }
 
             }
-        
+
         }
     }
     auto material1 = make_shared<dielectric>(1.5);
@@ -62,27 +58,11 @@ int main(int argc, char* argv[]) {
 
     auto material3 = make_shared<metal>(color(0.7, 0.6, 0.5), 0.0);
     world.add(make_shared<sphere>(point3(4, 1, 0), 1.0, material3));
-    
+
+    //BVH to help with preformance
     world = hittable_list(make_shared<bvh_node>(world));
-    
-    /*
-    auto material_ground = make_shared<lambertian>(color(0.0, 0.8, 0.8));
-    auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
-    auto material_left = make_shared<dielectric>(1.50);
-    auto material_bubble = make_shared<dielectric>(1.00/1.50);
-    auto material_right = make_shared<metal>(color(0.8, 0.6, 0.2), 1.0);
 
-    world.add(make_shared<sphere>(point3(0, -100.5, -1), 100, material_ground));
-    world.add(make_shared<sphere>(point3(0, 0, -8), 7, material_center));
-    world.add(make_shared<sphere>(point3(-4.0, 0, -1.0), 1.0, material_left));
-    world.add(make_shared<sphere>(point3(-1.0, 0, -1.0), 0.4, material_bubble));
-    world.add(make_shared<sphere>(point3(1.0, 0, -1.0), 0.5, material_right));
-    */
-    
-    
-    
-
-    camera cam;
+    //Camera Settings
     cam.aspect_ratio = 16.0 / 9.0;
     cam.img_width = 400;
     cam.samples_per_pixel = 100;
@@ -95,7 +75,64 @@ int main(int argc, char* argv[]) {
 
     cam.defocus_angle = 0.6;
     cam.focus_dist = 10.0;
+}
 
+void sphere_example(hittable_list& world, camera& cam) {
+    auto material_ground = make_shared<lambertian>(color(0.0, 0.8, 0.8));
+    auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
+    auto material_left = make_shared<dielectric>(1.50);
+    auto material_bubble = make_shared<dielectric>(1.00 / 1.50);
+    auto material_right = make_shared<metal>(color(0.8, 0.6, 0.2), 1.0);
+
+    world.add(make_shared<sphere>(point3(0, -100.5, -1), 100, material_ground));
+    world.add(make_shared<sphere>(point3(0, 0, -8), 7, material_center));
+    world.add(make_shared<sphere>(point3(-4.0, 0, -1.0), 1.0, material_left));
+    world.add(make_shared<sphere>(point3(-1.0, 0, -1.0), 0.4, material_bubble));
+    world.add(make_shared<sphere>(point3(1.0, 0, -1.0), 0.5, material_right));
+    
+
+    //Camera Settings
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.img_width = 400;
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+
+    cam.vfov = 20;
+    cam.lookfrom = point3(13, 2, 3);
+    cam.lookat = point3(0, 0, 0);
+    cam.up = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0.6;
+    cam.focus_dist = 10.0;
+}
+
+void checkered_spheres(hittable_list& world, camera& cam) {
+    auto checker = make_shared<checker_texture>(0.32, color(.2,.3,.1), color(0.9, 0.9, 0.9));
+
+    world.add(make_shared<sphere>(point3(0, -10, 0), 10, make_shared<lambertian>(checker)));
+    world.add(make_shared<sphere>(point3(0,  10, 0), 10, make_shared<lambertian>(checker)));
+
+    //Camera Settings
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.img_width = 400;
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+
+    cam.vfov = 20;
+    cam.lookfrom = point3(13, 2, 3);
+    cam.lookat = point3(0, 0, 0);
+    cam.up = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+ }
+
+int main(int argc, char* argv[]) {
+    hittable_list world;
+    camera cam;
+
+    //bouncing_spheres(world, cam);
+    //sphere_example(world, cam);
+    checkered_spheres(world, cam);
 
     if (argc > 1 && check_file_extention(argv[1])) {
         cam.render(world, argv[1]);
