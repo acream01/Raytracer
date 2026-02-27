@@ -59,10 +59,20 @@ public:
 		return true;
 	}
 
+	int longest_axis() const {
+		//returns the index of the longest axis of the bbox x:0 y:1 z:2
+
+		if (x.size() > y.size())
+			return x.size() > z.size() ? 0 : 2;
+		else
+			return y.size() > z.size() ? 1 : 2;
+	}
+
+	static const aabb empty, universe;
 private:
-
-
-
 };
+
+	const aabb aabb::empty = aabb(interval::empty, interval::empty, interval::empty);
+	const aabb aabb::universe = aabb(interval::universe, interval::universe, interval::universe);
 
 #endif
