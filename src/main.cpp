@@ -4,13 +4,14 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+#include "bvh.h"
 #include "camera.h"
 #include "hittable.h"
 #include "hittable_list.h"
 #include "material.h"
 #include "sphere.h"
 
-//Current Chapter: 3 Bounding Volume Hierarchies
+//Current Chapter: 3.8 Bounding Volume Hierarchies
 
 
 int main(int argc, char* argv[]) {

@@ -15,7 +15,7 @@ set(SOURCES
 "src/camera.h" 
 "src/interval.h"
 "src/material.h"
-)
+ "src/aabb.h" "src/bvh.h")
 
 
 # Add the executable target
