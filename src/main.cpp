@@ -12,6 +12,8 @@
 #include "sphere.h"
 #include "texture.h"
 
+//Chapter 5.0 Perlin Noise
+
 // Scenes
 void bouncing_spheres(hittable_list& world, camera& cam) {
     //Bouncing Sphere Scene
@@ -126,13 +128,58 @@ void checkered_spheres(hittable_list& world, camera& cam) {
     cam.defocus_angle = 0;
  }
 
+void earth(hittable_list& world, camera& cam) {
+    auto earth_texture = make_shared<image_texture>("world.jpg");
+    auto earth_surface = make_shared<lambertian>(earth_texture);
+    auto globe = make_shared<sphere>(point3(0), 2, earth_surface);
+
+    world.add(globe);
+
+    //Camera Settings
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.img_width = 400;
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+
+    cam.vfov = 20;
+    cam.lookfrom = point3(0, 0, 12);
+    cam.lookat = point3(0, 0, 0);
+    cam.up = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+
+}
+
+void perlin_sphere(hittable_list& world, camera& cam) {
+    auto pertext = make_shared<noise_texture>(4);
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(pertext)));
+    world.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<lambertian>(pertext)));
+
+    
+    //Camera Settings
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.img_width = 400;
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+
+    cam.vfov = 20;
+    cam.lookfrom = point3(13, 2, 3);
+    cam.lookat = point3(0, 0, 0);
+    cam.up = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+
+}
+
 int main(int argc, char* argv[]) {
     hittable_list world;
     camera cam;
 
     //bouncing_spheres(world, cam);
     //sphere_example(world, cam);
-    checkered_spheres(world, cam);
+    //checkered_spheres(world, cam);
+    //earth(world, cam);
+    perlin_sphere(world, cam);
 
     if (argc > 1 && check_file_extention(argv[1])) {
         cam.render(world, argv[1]);
