@@ -12,7 +12,7 @@
 #include "sphere.h"
 #include "texture.h"
 
-//Chapter 5.0 Perlin Noise
+//Chapter 6.0 Quadrilaterals
 
 // Scenes
 void bouncing_spheres(hittable_list& world, camera& cam) {
