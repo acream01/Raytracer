@@ -13,7 +13,7 @@
 #include "quad.h"
 #include "texture.h"
 
-//Chapter 7.0 Lights
+//Chapter 7.4 Cornel Box
 
 // Scenes
 void bouncing_spheres(hittable_list& world, camera& cam) {
@@ -78,6 +78,7 @@ void bouncing_spheres(hittable_list& world, camera& cam) {
 
     cam.defocus_angle = 0.6;
     cam.focus_dist = 10.0;
+    cam.background = color(0.70, 0.80, 1.00);
 }
 
 void sphere_example(hittable_list& world, camera& cam) {
@@ -107,6 +108,7 @@ void sphere_example(hittable_list& world, camera& cam) {
 
     cam.defocus_angle = 0.6;
     cam.focus_dist = 10.0;
+    cam.background = color(0.70, 0.80, 1.00);
 }
 
 void checkered_spheres(hittable_list& world, camera& cam) {
@@ -127,6 +129,7 @@ void checkered_spheres(hittable_list& world, camera& cam) {
     cam.up = vec3(0, 1, 0);
 
     cam.defocus_angle = 0;
+    cam.background = color(0.70, 0.80, 1.00);
  }
 
 void earth(hittable_list& world, camera& cam) {
@@ -148,6 +151,7 @@ void earth(hittable_list& world, camera& cam) {
     cam.up = vec3(0, 1, 0);
 
     cam.defocus_angle = 0;
+    cam.background = color(0.70, 0.80, 1.00);
 
 }
 
@@ -169,6 +173,7 @@ void perlin_sphere(hittable_list& world, camera& cam) {
     cam.up = vec3(0, 1, 0);
 
     cam.defocus_angle = 0;
+    cam.background = color(0.70, 0.80, 1.00);
 
 }
 
@@ -180,16 +185,18 @@ void quads(hittable_list& world, camera& cam) {
     auto right_blue = make_shared<lambertian>(color(0.2, 0.2, 1.0));
     auto upper_orange = make_shared<lambertian>(color(1.0, 0.5, 0.0));
     auto lower_teal = make_shared<lambertian>(color(0.2, 0.8, 0.8));
+    auto map = make_shared<image_texture>("world.jpg");
+    auto globe_surface = make_shared<lambertian>(map);
 
     // Quads
-    world.add(make_shared<quad>(point3(-3, -2, 5), vec3(0, 0, -4), vec3(0, 4, 0), left_red));
-    world.add(make_shared<quad>(point3(-2, -2, 0), vec3(4, 0, 0), vec3(0, 4, 0), back_green));
-    world.add(make_shared<quad>(point3(3, -2, 1), vec3(0, 0, 4), vec3(0, 4, 0), right_blue));
+    world.add(make_shared<quad>(point3(-3, -2, 5), vec3(0, 0, -4), vec3(0, 4, 0), globe_surface));
+    world.add(make_shared<quad>(point3(-2, -2, 0), vec3(4, 0, 0), vec3(0, 4, 0), globe_surface));
+    world.add(make_shared<quad>(point3(3, -2, 1), vec3(0, 0, 4), vec3(0, 4, 0), globe_surface));
     world.add(make_shared<quad>(point3(-2, 3, 1), vec3(4, 0, 0), vec3(0, 0, 4), upper_orange));
     world.add(make_shared<quad>(point3(-2, -3, 5), vec3(4, 0, 0), vec3(0, 0, -4), lower_teal));
 
     cam.aspect_ratio = 1.0;
-    cam.img_width = 1600;
+    cam.img_width = 400;
     cam.samples_per_pixel = 500;
     cam.max_depth = 50;
 
@@ -199,14 +206,43 @@ void quads(hittable_list& world, camera& cam) {
     cam.up = vec3(0, 1, 0);
 
     cam.defocus_angle = 0;
+    cam.background = color(0.70, 0.80, 1.00);
 }
 
+void simple_light(hittable_list& world, camera& cam) {
+    auto pertext = make_shared<noise_texture>(4);
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(pertext)));
+    world.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<lambertian>(pertext)));
 
+    auto difflight = make_shared<diffuse_light>(color(4, 4, 4));
+    world.add(make_shared<quad>(point3(3,1, -2), vec3(2,0,0), vec3(0, 2, 0), difflight));
+    
+    auto earth_texture = make_shared<image_texture>("world.jpg");
+    auto earth_surface = make_shared<lambertian>(earth_texture);
+    auto globe = make_shared<sphere>(point3(4, 1, 4), 1, earth_surface);
+
+    world.add(globe);
+
+    //Camera Settings
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.img_width = 1600;
+    cam.samples_per_pixel = 500;
+    cam.max_depth = 50;
+
+    cam.vfov = 20;
+    cam.lookfrom = point3(26, 2, 3);
+    cam.lookat = point3(0, 2, 0);
+    cam.up = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+    //cam.background = color(0.70, 0.80, 1.00);
+    
+}
 int main(int argc, char* argv[]) {
     hittable_list world;
     camera cam;
 
-    quads(world, cam);
+    simple_light(world, cam);
 
 
     if (argc > 1 && check_file_extention(argv[1])) {
