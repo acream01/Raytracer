@@ -1,5 +1,5 @@
 # Raytracer
-Simple Raytracer developed by following Ray Tracing in One Weekend by Peter Shirley
+Simple Raytracer developed by following Ray Tracing in One Weekend and Ray Tracing the Week After by Peter Shirley
 
 Additional Features Developed:
 - Render Timer
@@ -14,5 +14,5 @@ If no acceptable filename is provided with the correct file extention, output wi
 
 To build, compile in VisualStudio with C++ development tools
 
-![Example Render](images/FinalRenderV3.png)
+![Example Render](images/finalRenderV4.png)
 
