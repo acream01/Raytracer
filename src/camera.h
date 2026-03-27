@@ -27,6 +27,8 @@ public:
     point3 lookat = point3(0, 0, -1); 
     vec3 up = vec3(0, 1, 0);
 
+    double atmos_perspective = 0.0;
+
     double defocus_angle = 0; //Variation angle of rays through each pixel
     double focus_dist = 10; //Distance form camera look from point to plane of perfect focus
 
@@ -103,6 +105,7 @@ private:
     vec3 defocus_disk_u; //Defocus disk horizontal radius
     vec3 defocus_disk_v; //Defocus disk vertical radius
 
+    
 
 
 	void initialize() {
@@ -187,15 +190,39 @@ private:
         ray scattered;
         color attenuation;
         color color_from_emission = rec.mat->emitted(rec.u, rec.v, rec.p);
-
+        color color_from_scatter;
+        double scatterChance = random_double() * (rec.p.length() - r.origin().length());
+        
+        if (this->atmos_perspective && (scatterChance / this->atmos_perspective > 0.5)){
+            // atmos_perspective is the distance where there is a 50% scatter chance
+            //If ray travels the atmospheric perspective distance have a chance to scatter
+           atmos_perspective_scatter(r, ((rec.p - r.origin())/2), attenuation, scattered);
+                
+            // It just needs a bigger chance the farther it is to scatter randomly along its path
+            color_from_scatter = ray_color(scattered, depth - 1, world);
+        } else {
         if (!rec.mat->scatter(r, rec, attenuation, scattered))
             return color_from_emission;      
 
-        color color_from_scatter = attenuation * ray_color(scattered, depth-1, world);
+        color_from_scatter = attenuation * ray_color(scattered, depth-1, world);
+        }
         
         return color_from_emission + color_from_scatter;
     }
 
+    bool atmos_perspective_scatter(const ray& r_in, const point3 p, color& attenuation, ray& scattered)
+        const {
+        vec3 debris_normal = vec3(0, 1, 0);
+        auto scatter_direction = debris_normal + random_unit_vector();
+        
+        //Catch degenerate scatter direction
+        if (scatter_direction.near_zero())
+            scatter_direction = debris_normal;
+
+        scattered = ray(p, debris_normal, r_in.time());
+        //attenuation = ;
+        return true;
+    }
 
 
     void print_render_time(std::chrono::duration<double> duration) {

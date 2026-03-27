@@ -391,13 +391,54 @@ void final_scene(hittable_list& world, camera& cam, int image_width, int samples
     
     }
 
+void atmostpheric_perspective(hittable_list& world, camera& cam) {
+    auto world_distance = 100000.0;
+
+    auto green = make_shared<lambertian>(color(0.2, 0.65, 0.2));
+    auto red = make_shared<lambertian>(color(0.65, 0.2, 0.2));
+    auto pink = make_shared<lambertian>(color(0.80, 0.5, 0.2));
+
+    world.add(make_shared<quad>(point3(-500, 0, -world_distance), vec3(world_distance - 50000, 0, 0), vec3(0, 0, 2*world_distance), green)); //Ground
+
+    
+    for (int i = -500; i < world_distance; i += 500){
+        auto ran = random_double();
+    
+    shared_ptr<hittable> box1 = box(point3(0), point3(150, 200 + 100*ran, 150), pink);
+    box1 = make_shared<rotate_y>(box1, 15);
+    box1 = make_shared<translate>(box1, vec3(i, 0, ran * 700));
+    world.add(box1);
+
+
+    }
+    
+
+    world.add(make_shared<sphere>(point3(world_distance, 0, 0), 50000, red));
+
+
+    //Camera Settings
+    cam.aspect_ratio = 16.0/9.0;
+    cam.img_width = 400;
+    cam.samples_per_pixel = 200;
+    cam.max_depth = 50;
+    cam.background = color(0.1, 0.2, 0.4);
+
+    cam.vfov = 85;
+    cam.lookfrom = point3(-500, 500, -300);
+    cam.lookat = point3(10000, 0, 0);
+    cam.up = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+
+    cam.atmos_perspective = world_distance;
+}
 
 int main(int argc, char* argv[]) {
     hittable_list world;
     camera cam;
 
     
-    final_scene(world, cam, 800, 10000, 40);
+    atmostpheric_perspective(world, cam);
 
 
     if (argc > 1 && check_file_extention(argv[1])) {
@@ -405,5 +446,4 @@ int main(int argc, char* argv[]) {
     }
     else 
         cam.render(world, "output.png");
-}
-
+} 
