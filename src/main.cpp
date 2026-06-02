@@ -4,6 +4,10 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "tiny_obj_loader.h"
+
+
 #include "bvh.h"
 #include "camera.h"
 #include "constant_medium.h"
@@ -13,6 +17,9 @@
 #include "sphere.h"
 #include "quad.h"
 #include "texture.h"
+
+#include "iostream"
+#include "iomanip"
 
 // Scenes
 void bouncing_spheres(hittable_list& world, camera& cam) {
@@ -265,7 +272,7 @@ void cornell_box(hittable_list& world, camera& cam) {
     //Camera Settings
     cam.aspect_ratio = 1.0;
     cam.img_width = 600;
-    cam.samples_per_pixel = 100;
+    cam.samples_per_pixel = 64;
     cam.max_depth = 50;
     cam.background = color(0);
 
@@ -438,7 +445,7 @@ int main(int argc, char* argv[]) {
     camera cam;
 
     
-    atmostpheric_perspective(world, cam);
+    cornell_box(world, cam);
 
 
     if (argc > 1 && check_file_extention(argv[1])) {
@@ -446,4 +453,5 @@ int main(int argc, char* argv[]) {
     }
     else 
         cam.render(world, "output.png");
+
 } 
