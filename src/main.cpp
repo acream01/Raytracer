@@ -18,8 +18,11 @@
 #include "quad.h"
 #include "texture.h"
 
-#include "iostream"
+#include <iostream>
+#include <math.h>
 #include "iomanip"
+
+//10. Mixture Densities
 
 // Scenes
 void bouncing_spheres(hittable_list& world, camera& cam) {
@@ -272,7 +275,7 @@ void cornell_box(hittable_list& world, camera& cam) {
     //Camera Settings
     cam.aspect_ratio = 1.0;
     cam.img_width = 600;
-    cam.samples_per_pixel = 64;
+    cam.samples_per_pixel = 10;
     cam.max_depth = 50;
     cam.background = color(0);
 
@@ -439,6 +442,8 @@ void atmostpheric_perspective(hittable_list& world, camera& cam) {
 
     cam.atmos_perspective = world_distance;
 }
+
+
 
 int main(int argc, char* argv[]) {
     hittable_list world;

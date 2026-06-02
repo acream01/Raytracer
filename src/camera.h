@@ -207,10 +207,13 @@ private:
 
         ray scattered;
         color attenuation;
-        color color_from_emission = rec.mat->emitted(rec.u, rec.v, rec.p);
+        double pdf_value;
+        color color_from_emission = rec.mat->emitted(r, rec, rec.u, rec.v, rec.p);
+
         color color_from_scatter;
         double scatterChance = random_double() * (rec.p.length() - r.origin().length());
         
+        /*atmos perspective*/
         if (this->atmos_perspective && (scatterChance / this->atmos_perspective > 0.5)){
             // atmos_perspective is the distance where there is a 50% scatter chance
             //If ray travels the atmospheric perspective distance have a chance to scatter
@@ -219,10 +222,31 @@ private:
             // It just needs a bigger chance the farther it is to scatter randomly along its path
             color_from_scatter = ray_color(scattered, depth - 1, world);
         } else {
-        if (!rec.mat->scatter(r, rec, attenuation, scattered))
-            return color_from_emission;      
+        /*atmos perspective*/
+        
+        if (!rec.mat->scatter(r, rec, attenuation, scattered, pdf_value))
+            return color_from_emission;
+         
+        auto on_light = point3(random_double(213, 343), 554, random_double(227, 332));
+        auto to_light = on_light - rec.p;
+        auto distance_squared = to_light.length_squared();
+        to_light = unit_vector(to_light);
 
-        color_from_scatter = attenuation * ray_color(scattered, depth-1, world);
+        if (dot(to_light, rec.normal) < 0)
+           return color_from_emission;
+
+        double light_area = (343-213) * (332-227);
+        auto light_cosine = std::fabs(to_light.y());
+        if (light_cosine < 0.000001)
+           return color_from_emission;
+       
+        pdf_value = distance_squared / (light_cosine * light_area);
+        scattered = ray(rec.p, to_light, r.time());
+
+        double scattering_pdf = rec.mat->scattering_pdf(r, rec, scattered);
+
+        color_from_scatter = 
+                (attenuation * scattering_pdf * ray_color(scattered, depth-1, world)) / pdf_value;
         }
         
         return color_from_emission + color_from_scatter;
