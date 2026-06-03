@@ -9,6 +9,7 @@
 
 #include "color.h"
 #include "hittable.h"
+#include "pdf.h"
 #include "material.h"
 #include "ray.h"
 #include <chrono>
@@ -34,7 +35,9 @@ public:
 
 
 
-    void render_rows(int y_start, int y_end, const hittable& world, std::vector<uint8_t>& pixels, std::atomic_int& rows_done) {
+    void render_rows(int y_start, int y_end,
+        const hittable& world, const hittable& lights,
+        std::vector<uint8_t>& pixels, std::atomic_int& rows_done) {
         //Render specified rows for multithreading/parralelization
         for (int y = y_start; y < y_end; ++y) {
             for (int x = 0; x < img_width; ++x) {
@@ -42,7 +45,7 @@ public:
                 for (int s_j = 0; s_j < sqrt_spp; s_j++) { //Stratified samples
                     for (int s_i = 0; s_i < sqrt_spp; s_i++) { //Stratified samples
                         ray r = get_ray(x, y, s_i, s_j);
-                        pixel_color += ray_color(r, max_depth, world);
+                        pixel_color += ray_color(r, max_depth, world, lights);
                     }
                 }
 
@@ -53,7 +56,7 @@ public:
         }
     }
 
-	void render(const hittable& world, char* outfile) {
+	void render(const hittable& world, const hittable& lights, char* outfile) {
         //Start render timer
         auto start_time = std::chrono::steady_clock::now();
 
@@ -71,8 +74,8 @@ public:
         for (int i = 0; i < num_threads; i++) {
             int y_start = i * rows_per_thread;
             int y_end = (i == num_threads - 1) ? img_height : y_start + rows_per_thread;
-            threads.emplace_back([this, y_start, y_end, &world, &pixels, &rows_done]() {
-                render_rows(y_start, y_end, world, pixels, rows_done);
+            threads.emplace_back([this, y_start, y_end, &world, &lights, &pixels, &rows_done]() {
+                render_rows(y_start, y_end, world, lights, pixels, rows_done);
                 });
 
         }
@@ -194,60 +197,36 @@ private:
         return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
     }
 
-    color ray_color(const ray& r, int depth, const hittable& world) const {
+    color ray_color(const ray& r, int depth, const hittable& world, const hittable& lights) const {
         //If we exceed the ray bounce limit no more light is gathered
         if (depth <= 0)
             return color(0, 0, 0);
 
-        hit_record rec;
-        
     //If the ray hits nothing, return then background color.
+        hit_record rec;
         if (!world.hit(r, interval(0.001, infinity), rec)) 
             return background;
 
-        ray scattered;
-        color attenuation;
-        double pdf_value;
+        scatter_record srec;
         color color_from_emission = rec.mat->emitted(r, rec, rec.u, rec.v, rec.p);
-
-        color color_from_scatter;
-        double scatterChance = random_double() * (rec.p.length() - r.origin().length());
         
-        /*atmos perspective*/
-        if (this->atmos_perspective && (scatterChance / this->atmos_perspective > 0.5)){
-            // atmos_perspective is the distance where there is a 50% scatter chance
-            //If ray travels the atmospheric perspective distance have a chance to scatter
-           atmos_perspective_scatter(r, ((rec.p - r.origin())/2), attenuation, scattered);
-                
-            // It just needs a bigger chance the farther it is to scatter randomly along its path
-            color_from_scatter = ray_color(scattered, depth - 1, world);
-        } else {
-        /*atmos perspective*/
-        
-        if (!rec.mat->scatter(r, rec, attenuation, scattered, pdf_value))
+        if (!rec.mat->scatter(r, rec, srec))
             return color_from_emission;
-         
-        auto on_light = point3(random_double(213, 343), 554, random_double(227, 332));
-        auto to_light = on_light - rec.p;
-        auto distance_squared = to_light.length_squared();
-        to_light = unit_vector(to_light);
+        
+        if (srec.skip_pdf) {
+            return srec.attenuation * ray_color(srec.skip_pdf_ray, depth-1, world, lights);
+        }
 
-        if (dot(to_light, rec.normal) < 0)
-           return color_from_emission;
-
-        double light_area = (343-213) * (332-227);
-        auto light_cosine = std::fabs(to_light.y());
-        if (light_cosine < 0.000001)
-           return color_from_emission;
-       
-        pdf_value = distance_squared / (light_cosine * light_area);
-        scattered = ray(rec.p, to_light, r.time());
+        auto light_ptr = make_shared<hittable_pdf>(lights, rec.p);
+        mixture_pdf p(light_ptr, srec.pdf_ptr);
+        
+        ray scattered = ray(rec.p, p.generate(), r.time());
+        auto pdf_value = p.value(scattered.direction());
 
         double scattering_pdf = rec.mat->scattering_pdf(r, rec, scattered);
 
-        color_from_scatter = 
-                (attenuation * scattering_pdf * ray_color(scattered, depth-1, world)) / pdf_value;
-        }
+        color sample_color = ray_color(scattered, depth-1, world, lights);
+        color color_from_scatter = (srec.attenuation * scattering_pdf * sample_color) / pdf_value;
         
         return color_from_emission + color_from_scatter;
     }

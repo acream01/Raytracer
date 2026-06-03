@@ -18,11 +18,7 @@
 #include "quad.h"
 #include "texture.h"
 
-#include <iostream>
-#include <math.h>
-#include "iomanip"
 
-//10. Mixture Densities
 
 // Scenes
 void bouncing_spheres(hittable_list& world, camera& cam) {
@@ -248,34 +244,43 @@ void simple_light(hittable_list& world, camera& cam) {
     
 }
 
-void cornell_box(hittable_list& world, camera& cam) {
+void cornell_box(hittable_list& world, hittable_list& lights, camera& cam) {
 
     auto red   = make_shared<lambertian>(color(0.65 , 0.05, 0.05));
     auto white = make_shared<lambertian>(color(0.73, 0.73, 0.73));
     auto green = make_shared<lambertian>(color(0.12, 0.45, 0.15));
+
     auto light = make_shared<diffuse_light>(color(15, 15, 15));
+    world.add(make_shared<quad>(point3(343, 554, 332), vec3(-130, 0, 0), vec3(0, 0, -105), light));
 
     world.add(make_shared<quad>(point3(555, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), green));
     world.add(make_shared<quad>(point3(0, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), red));
-    world.add(make_shared<quad>(point3(343, 554, 332), vec3(-130, 0, 0), vec3(0, 0, -105), light));
     world.add(make_shared<quad>(point3(0, 0, 0), vec3(555, 0, 0), vec3(0, 0, 555), white));
     world.add(make_shared<quad>(point3(555, 555, 555), vec3(-555, 0, 0), vec3(0, 0, -555), white));
     world.add(make_shared<quad>(point3(0, 0, 555), vec3(555, 0, 0), vec3(0, 555, 0), white));
     
+    //shared_ptr<material> aluminum = make_shared<metal>(color(0.8, 0.85, 0.88), 0.0);
     shared_ptr<hittable> box1 = box(point3(0), point3(165, 330, 165), white);
     box1 = make_shared<rotate_y>(box1, 15);
     box1 = make_shared<translate>(box1, vec3(265, 0, 295));
     world.add(box1);
 
-    shared_ptr<hittable> box2 = box(point3(0), point3(165, 165, 165), white);
-    box2 = make_shared<rotate_y>(box2, -18);
-    box2 = make_shared<translate>(box2, vec3(130, 0, 65));
-    world.add(box2);
+    //shared_ptr<hittable> box2 = box(point3(0), point3(165, 165, 165), white);
+    //box2 = make_shared<rotate_y>(box2, -18);
+    //box2 = make_shared<translate>(box2, vec3(130, 0, 65));
+    //world.add(box2);
+    auto glass = make_shared<dielectric>(1.5);
+    world.add(make_shared<sphere>(point3(190, 90, 190), 90, glass));
+   
+    //Light sources (Invisible areas for PDF to direct to)
+    auto empty_material = shared_ptr<material>();
+    lights.add(make_shared<quad>(point3(343, 554, 332), vec3(-130, 0, 0), vec3(0, 0, -105), empty_material));
+    lights.add(make_shared<sphere>(point3(190, 90, 190), 90, empty_material));
 
     //Camera Settings
     cam.aspect_ratio = 1.0;
     cam.img_width = 600;
-    cam.samples_per_pixel = 10;
+    cam.samples_per_pixel = 1000;
     cam.max_depth = 50;
     cam.background = color(0);
 
@@ -447,16 +452,16 @@ void atmostpheric_perspective(hittable_list& world, camera& cam) {
 
 int main(int argc, char* argv[]) {
     hittable_list world;
+    hittable_list lights;
     camera cam;
-
     
-    cornell_box(world, cam);
-
+    cornell_box(world, lights, cam);
+    
 
     if (argc > 1 && check_file_extention(argv[1])) {
-        cam.render(world, argv[1]);
+        cam.render(world, lights, argv[1]);
     }
     else 
-        cam.render(world, "output.png");
+        cam.render(world, lights, "output.png");
 
 } 
