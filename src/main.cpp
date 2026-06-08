@@ -280,7 +280,7 @@ void cornell_box(hittable_list& world, hittable_list& lights, camera& cam) {
     //Camera Settings
     cam.aspect_ratio = 1.0;
     cam.img_width = 600;
-    cam.samples_per_pixel = 1000;
+    cam.samples_per_pixel = 200;
     cam.max_depth = 50;
     cam.background = color(0);
 
@@ -332,7 +332,7 @@ void cornell_smoke(hittable_list& world, camera& cam) {
     cam.defocus_angle = 0;
 }
 
-void final_scene(hittable_list& world, camera& cam, int image_width, int samples_per_pixel, int max_depth) {
+void final_scene(hittable_list& world, hittable_list& lights, camera& cam, int image_width, int samples_per_pixel, int max_depth) {
     hittable_list boxes1;
     auto ground = make_shared<lambertian>(color(0.48, 0.83, 0.53));
 
@@ -390,6 +390,12 @@ void final_scene(hittable_list& world, camera& cam, int image_width, int samples
         vec3(-100, 270, 395)
     )
     );
+
+    //Light sources (Invisible areas for PDF to direct to)
+    auto empty_material = shared_ptr<material>();
+    lights.add(make_shared<quad>(point3(123, 554, 147), vec3(300, 0, 0), vec3(0, 0, 265), empty_material));
+    //lights.add(make_shared<sphere>(point3(260, 150, 45), 50, empty_material));
+    //Theory- Need one on metal sphere
 
     cam.aspect_ratio = 1.0;
     cam.img_width = image_width;
@@ -455,8 +461,8 @@ int main(int argc, char* argv[]) {
     hittable_list lights;
     camera cam;
     
-    cornell_box(world, lights, cam);
     
+    final_scene(world, lights, cam, 800, 5000, 50);
 
     if (argc > 1 && check_file_extention(argv[1])) {
         cam.render(world, lights, argv[1]);
