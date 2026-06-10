@@ -17,7 +17,7 @@ set(SOURCES
 "src/material.h"
  "src/aabb.h" 
  "src/bvh.h"
-"src/tringle.h"
+"src/triangle.h"
 )
 
 
