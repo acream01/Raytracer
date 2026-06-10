@@ -7,9 +7,9 @@ class triangle : public hittable {
 public:
 	triangle(point3 v0, point3 v1, point3 v2, shared_ptr<material> mat) : A(v0), B(v1), C(v2), mat(mat) {
 		//Define Normal
-		auto n = cross(v0, v1);
+		auto n = cross(v1 - v0, v2 - v0);
 		normal = unit_vector(n);
-		D = -1 * dot(normal, A);
+		D = dot(normal, A);
 
 		area = n.length();
 		set_bounding_box();

@@ -44,7 +44,8 @@ public:
                 write_color(pixels, pixel_samples_scale * pixel_color, x, y, img_width);
             }
             rows_done++;
-            std::clog << '\r' << "Rows Remaining: " << img_height - rows_done << "              " << std::flush;
+            std::clog << '\r' << "Rows Remaining: " << img_height - rows_done
+                << "                             " << std::flush;
         }
     }
 

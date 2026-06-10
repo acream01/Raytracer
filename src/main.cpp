@@ -15,6 +15,9 @@
 #include "triangle.h"
 #include "texture.h"
 
+#define TINYOBJLOADER_IMPLEMENTATION // define this in only *one* .cc
+#include "model_loader.h"
+
 // Scenes
 void bouncing_spheres(hittable_list& world, camera& cam) {
     //Bouncing Sphere Scene
@@ -393,12 +396,106 @@ void final_scene(hittable_list& world, camera& cam, int image_width, int samples
     }
 
 
+void cornell_triangle(hittable_list& world, camera& cam) {
+
+    //Scene
+    auto red = make_shared<lambertian>(color(0.65, 0.05, 0.05));
+    auto white = make_shared<lambertian>(color(0.73, 0.73, 0.73));
+    auto green = make_shared<lambertian>(color(0.12, 0.45, 0.15));
+
+    world.add(make_shared<quad>(point3(555, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), green));
+    world.add(make_shared<quad>(point3(0, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), red));
+    world.add(make_shared<quad>(point3(0, 0, 0), vec3(555, 0, 0), vec3(0, 0, 555), white));
+    world.add(make_shared<quad>(point3(555, 555, 555), vec3(-555, 0, 0), vec3(0, 0, -555), white));
+    world.add(make_shared<quad>(point3(0, 0, 555), vec3(555, 0, 0), vec3(0, 555, 0), white));
+
+    //Light
+    auto light = make_shared<diffuse_light>(color(15, 15, 15));
+    world.add(make_shared<quad>(point3(343, 554, 332), vec3(-130, 0, 0), vec3(0, 0, -105), light));
+
+    
+    world.add(make_shared<triangle>(point3(300, 178, -100), point3(400, 300, 300), point3(200, 100, 0),  white));
+    
+
+    //Camera Settings
+    cam.aspect_ratio = 1.0;
+    cam.img_width = 600;
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+    cam.background = color(0);
+
+    cam.vfov = 40;
+    cam.lookfrom = point3(278, 278, -800);
+    cam.lookat = point3(278, 278, 0);
+    cam.up = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+}
+
+void triangles(hittable_list& world, camera& cam) {
+   
+    // Materials
+    auto red = make_shared<lambertian>(color(1.0, 0.2, 0.2));
+ 
+
+    // Triangle
+
+    world.add(make_shared<triangle>(point3(6, -5, -1), point3(0, 6, 3), point3(-6, -5, 4), red));
+
+
+    cam.aspect_ratio = 1.0;
+    cam.img_width = 400;
+    cam.samples_per_pixel = 10;
+    cam.max_depth = 50;
+
+    cam.vfov = 80;
+    cam.lookfrom = point3(0, 0, -9);
+    cam.lookat = point3(0, 0, 0);
+    cam.up = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+    cam.background = color(0.70, 0.80, 1.00);
+}
+
+void model_render(hittable_list& world, camera& cam) {
+    // Materials
+    auto red = make_shared<lambertian>(color(0.65, 0.05, 0.05));
+    auto white = make_shared<lambertian>(color(0.73, 0.73, 0.73));
+    auto green = make_shared<lambertian>(color(0.12, 0.45, 0.15));
+
+    // Triangle
+
+    //world.add(make_shared<triangle>(point3(6, -5, -1), point3(0, 6, 3), point3(-6, -5, 4), red));
+    hittable_list model_primatives;
+
+    load_obj(model_primatives, red, "./models/bunny.obj");
+    
+    model_primatives.bounding_box().print_bbox();
+
+    //BVH to help with preformance
+    world = hittable_list(make_shared<bvh_node>(model_primatives));
+
+
+    cam.aspect_ratio = 1.0;
+    cam.img_width = 240;
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+
+    cam.vfov = 80;
+    cam.lookfrom = point3(-0.1, 0.6, 1);
+    cam.lookat = point3(0, 0.2, 0);
+    cam.up = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+    cam.background = color(0.70, 0.80, 1.00);
+}
+
 int main(int argc, char* argv[]) {
     hittable_list world;
     camera cam;
 
     
-    final_scene(world, cam, 800, 10000, 40);
+    model_render(world, cam);
 
 
     if (argc > 1 && check_file_extention(argv[1])) {
