@@ -12,6 +12,7 @@
 #include "material.h"
 #include "sphere.h"
 #include "quad.h"
+#include "triangle.h"
 #include "texture.h"
 
 // Scenes
