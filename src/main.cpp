@@ -395,7 +395,6 @@ void final_scene(hittable_list& world, camera& cam, int image_width, int samples
     
     }
 
-
 void cornell_triangle(hittable_list& world, camera& cam) {
 
     //Scene
@@ -463,30 +462,137 @@ void model_render(hittable_list& world, camera& cam) {
     auto white = make_shared<lambertian>(color(0.73, 0.73, 0.73));
     auto green = make_shared<lambertian>(color(0.12, 0.45, 0.15));
 
-    // Triangle
-
-    //world.add(make_shared<triangle>(point3(6, -5, -1), point3(0, 6, 3), point3(-6, -5, 4), red));
-    hittable_list model_primatives;
-
-    load_obj(model_primatives, red, "./models/bunny.obj");
-    
-    model_primatives.bounding_box().print_bbox();
+    // Model
+    hittable_list model_object_space;
+    load_obj(model_object_space, green, "./models/stanford-bunny.obj");
 
     //BVH to help with preformance
-    world = hittable_list(make_shared<bvh_node>(model_primatives));
+    shared_ptr<hittable> model_world_space = make_shared<bvh_node>(model_object_space);
+
+    model_world_space = make_shared<normalize_bbox_x>(model_world_space);
+    
+    //model_world_space = make_shared<translate>(model_world_space, vec3(0, 0, 0));
+    world.add(model_world_space);
+
+    
+    world = hittable_list(make_shared<bvh_node>(world));
 
 
     cam.aspect_ratio = 1.0;
-    cam.img_width = 240;
+    cam.img_width = 500;
     cam.samples_per_pixel = 100;
     cam.max_depth = 50;
 
     cam.vfov = 80;
-    cam.lookfrom = point3(-0.1, 0.6, 1);
+    cam.lookfrom = point3(0, 0.5, 2);
     cam.lookat = point3(0, 0.2, 0);
     cam.up = vec3(0, 1, 0);
 
     cam.defocus_angle = 0;
+    cam.background = color(0.70, 0.80, 1.00);
+}
+
+void cornell_mesh(hittable_list& world, camera& cam) {
+
+    //Scene
+    auto red = make_shared<lambertian>(color(0.65, 0.05, 0.05));
+    auto white = make_shared<lambertian>(color(0.73, 0.73, 0.73));
+    auto green = make_shared<lambertian>(color(0.12, 0.45, 0.15));
+    auto metalic = make_shared<metal>(color(0.7), 1.0);
+    auto glass = make_shared<dielectric>(1.5);
+
+    world.add(make_shared<quad>(point3(555, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), green));
+    world.add(make_shared<quad>(point3(0, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), red));
+    world.add(make_shared<quad>(point3(0, 0, 0), vec3(555, 0, 0), vec3(0, 0, 555), white));
+    world.add(make_shared<quad>(point3(555, 555, 555), vec3(-555, 0, 0), vec3(0, 0, -555), white));
+    world.add(make_shared<quad>(point3(0, 0, 555), vec3(555, 0, 0), vec3(0, 555, 0), white));
+
+
+    shared_ptr<hittable> box1 = box(point3(0), point3(165, 330, 165), white);
+    box1 = make_shared<rotate_y>(box1, 15);
+    box1 = make_shared<translate>(box1, vec3(265, 0, 295));
+    world.add(box1);
+
+    hittable_list model_object_space;
+    load_obj(model_object_space, glass, "./models/bunny.obj");
+    //BVH to help with preformance
+    shared_ptr<hittable> model_world_space = make_shared<bvh_node>(model_object_space);
+
+    model_world_space = make_shared<scale>(model_world_space, 300.0);
+    //model_world_space = make_shared<rotate_z>(model_world_space, 6.0);
+    model_world_space = make_shared<rotate_y>(model_world_space, 180.0);
+    model_world_space = make_shared<translate>(model_world_space, vec3(150, 10, 405));
+    world.add(model_world_space);
+
+    
+    //Light
+    auto light = make_shared<diffuse_light>(color(15, 15, 15));
+    world.add(make_shared<quad>(point3(343, 554, 332), vec3(-130, 0, 0), vec3(0, 0, -105), light));
+
+    world = hittable_list(make_shared<bvh_node>(world));
+   
+
+
+    //Camera Settings
+    cam.aspect_ratio = 1.0;
+    cam.img_width = 600; //600
+    cam.samples_per_pixel = 500;
+    cam.max_depth = 50;
+    cam.background = color(0);
+
+    cam.vfov = 40;
+    cam.lookfrom = point3(278, 278, -800);
+    cam.lookat = point3(278, 278, 0);
+    cam.up = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+}
+
+void sphere_mesh_example(hittable_list& world, camera& cam) {
+    auto material_ground = make_shared<lambertian>(color(0.0, 0.8, 0.8));
+    auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
+    auto material_left = make_shared<dielectric>(1.50);
+    auto material_bubble = make_shared<dielectric>(1.00 / 1.50);
+    auto material_right = make_shared<metal>(color(0.8, 0.6, 0.2), 1.0);
+
+    auto white = make_shared<lambertian>(color(0.73, 0.73, 0.73));
+    auto metalic = make_shared<metal>(color(0.7), 0.0);
+    auto glass = make_shared<dielectric>(1.5);
+
+    world.add(make_shared<sphere>(point3(0, -100.5, -1), 100, material_ground));
+    world.add(make_shared<sphere>(point3(0, 0, -8), 7, material_center));
+    world.add(make_shared<sphere>(point3(-4.0, 0, -1.0), 1.0, material_left));
+    world.add(make_shared<sphere>(point3(-1.0, 0, -1.0), 0.4, material_bubble));
+    world.add(make_shared<sphere>(point3(4.0, 0, 2.0), 0.5, material_right));
+    
+    hittable_list model_object_space;
+    load_obj(model_object_space, metalic, "./models/bunny.obj");
+    //BVH to help with preformance
+    //Bunny 
+
+    shared_ptr<hittable> model_world_space = make_shared<bvh_node>(model_object_space);
+    model_world_space = make_shared<scale>(model_world_space, 3.0);
+    //model_world_space = make_shared<rotate_z>(model_world_space, 6.0);
+    model_world_space = make_shared<rotate_y>(model_world_space, 150.0);
+    model_world_space = make_shared<translate>(model_world_space, vec3(-2, -0.3, 2.5));
+    world.add(model_world_space);
+    
+
+    world = hittable_list(make_shared<bvh_node>(world));
+
+    //Camera Settings
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.img_width = 1080;
+    cam.samples_per_pixel = 1000;
+    cam.max_depth = 50;
+
+    cam.vfov = 20;
+    cam.lookfrom = point3(13, 2, 3);
+    cam.lookat = point3(0, 0, 0);
+    cam.up = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0.6;
+    cam.focus_dist = 15.0;
     cam.background = color(0.70, 0.80, 1.00);
 }
 
@@ -501,7 +607,9 @@ int main(int argc, char* argv[]) {
     if (argc > 1 && check_file_extention(argv[1])) {
         cam.render(world, argv[1]);
     }
-    else 
+    else {
         cam.render(world, "output.png");
+    }
+
 }
 
