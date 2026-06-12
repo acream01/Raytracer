@@ -463,28 +463,32 @@ void model_render(hittable_list& world, camera& cam) {
     auto green = make_shared<lambertian>(color(0.12, 0.45, 0.15));
 
     // Model
-    hittable_list model_object_space;
-    load_obj(model_object_space, green, "./models/stanford-bunny.obj");
+    auto earth_texture = make_shared<image_texture>("treestumptex.png");
+    auto earth_surface = make_shared<lambertian>(earth_texture);
 
+
+    hittable_list model_object_space;
+    load_obj(model_object_space, earth_surface, "./models/treestump.obj");
+
+    
     //BVH to help with preformance
     shared_ptr<hittable> model_world_space = make_shared<bvh_node>(model_object_space);
 
     model_world_space = make_shared<normalize_bbox_x>(model_world_space);
+
     
     //model_world_space = make_shared<translate>(model_world_space, vec3(0, 0, 0));
     world.add(model_world_space);
-
-    
     world = hittable_list(make_shared<bvh_node>(world));
 
 
     cam.aspect_ratio = 1.0;
     cam.img_width = 500;
-    cam.samples_per_pixel = 100;
+    cam.samples_per_pixel = 10;
     cam.max_depth = 50;
 
     cam.vfov = 80;
-    cam.lookfrom = point3(0, 0.5, 2);
+    cam.lookfrom = point3(0, 2, 2);
     cam.lookat = point3(0, 0.2, 0);
     cam.up = vec3(0, 1, 0);
 
@@ -603,7 +607,7 @@ int main(int argc, char* argv[]) {
     
     model_render(world, cam);
 
-
+    
     if (argc > 1 && check_file_extention(argv[1])) {
         cam.render(world, argv[1]);
     }
