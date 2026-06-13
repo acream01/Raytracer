@@ -463,12 +463,8 @@ void model_render(hittable_list& world, camera& cam) {
     auto green = make_shared<lambertian>(color(0.12, 0.45, 0.15));
 
     // Model
-    auto earth_texture = make_shared<image_texture>("treestumptex.png");
-    auto earth_surface = make_shared<lambertian>(earth_texture);
-
-
     hittable_list model_object_space;
-    load_obj(model_object_space, earth_surface, "./models/treestump.obj");
+    load_obj(model_object_space, white, "./models/bunny.obj");
 
     
     //BVH to help with preformance
@@ -488,7 +484,7 @@ void model_render(hittable_list& world, camera& cam) {
     cam.max_depth = 50;
 
     cam.vfov = 80;
-    cam.lookfrom = point3(0, 2, 2);
+    cam.lookfrom = point3(0, 0.4, 2);
     cam.lookat = point3(0, 0.2, 0);
     cam.up = vec3(0, 1, 0);
 
@@ -600,12 +596,64 @@ void sphere_mesh_example(hittable_list& world, camera& cam) {
     cam.background = color(0.70, 0.80, 1.00);
 }
 
+void log_and_spheres(hittable_list& world, camera & cam) {
+    // Materials
+    auto red = make_shared<lambertian>(color(0.65, 0.05, 0.05));
+    auto white = make_shared<lambertian>(color(0.73, 0.73, 0.73));
+    auto green = make_shared<lambertian>(color(0.12, 0.45, 0.15));
+    auto glass = make_shared<dielectric>(1.5);
+
+    //Ground plane
+    world.add(make_shared<quad>(point3(-500, 0, -500), vec3(1000, 0, 0), vec3(0, 0, 1000), white));
+
+    //Spheres
+    world.add(make_shared<sphere>(point3(-4, 10, -15), 10, green));
+    world.add(make_shared<sphere>(point3(14, 6, 15), 6, glass));
+    
+    // Model
+    auto earth_texture = make_shared<image_texture>("treestumptex.png");
+    auto earth_surface = make_shared<lambertian>(earth_texture);
+    hittable_list model_object_space;
+    load_obj(model_object_space, earth_surface, "./models/treestump.obj");
+
+    //BVH to help with preformance
+    shared_ptr<hittable> log = make_shared<bvh_node>(model_object_space);
+    log = make_shared<normalize_bbox_x>(log);
+    log = make_shared<scale>(log, 7);
+    log = make_shared<translate>(log, vec3(9, -1.28, -3));
+    log->bounding_box().print_bbox();
+    world.add(log);
+
+    log = make_shared<scale>(log, 1.4);
+    log = make_shared<rotate_y>(log, 15);
+    log = make_shared<translate>(log, vec3(9, -2.28, -3));
+    world.add(log);
+
+    //model_world_space = make_shared<translate>(model_world_space, vec3(0, 0, 0));
+    world = hittable_list(make_shared<bvh_node>(world));
+    
+
+
+    cam.aspect_ratio = 1.0;
+    cam.img_width = 500;
+    cam.samples_per_pixel = 10;
+    cam.max_depth = 50;
+
+    cam.vfov = 80;
+    cam.lookfrom = point3(-14, 14, 35);
+    cam.lookat = point3(0, 1, 0);
+    cam.up = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+    cam.background = color(0.70, 0.80, 1.00);
+}
+
 int main(int argc, char* argv[]) {
     hittable_list world;
     camera cam;
 
     
-    model_render(world, cam);
+    log_and_spheres(world, cam);
 
     
     if (argc > 1 && check_file_extention(argv[1])) {

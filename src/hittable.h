@@ -569,4 +569,82 @@ private:
 	aabb bbox;
 };
 
+class move_center_to : public hittable {
+public:
+	move_center_to(shared_ptr<hittable> object, const point3& position)
+		: object(object), position(position)
+	{
+		double centerx = (object->bounding_box().x.max + object->bounding_box().x.min) / 2;
+		double centery = (object->bounding_box().y.max + object->bounding_box().y.min) / 2;
+		double centerz = (object->bounding_box().z.max + object->bounding_box().z.min) / 2;
+
+		offset = position - vec3(centerx, centery, centerz);
+
+
+		bbox = object->bounding_box() + offset;
+	}
+
+	bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
+		//Move the ray backwards by the offset
+		ray offset_r(r.origin() - offset, r.direction(), r.time());
+
+		//Determine whether an intersection exists along the offset ray (and if so where)
+		if (!object->hit(offset_r, ray_t, rec))
+			return false;
+
+		//Move the intersection point forwards by the offset
+		rec.p += offset;
+
+		return true;
+	}
+
+	aabb bounding_box() const override { return bbox; }
+
+private:
+	shared_ptr<hittable> object;
+	vec3 offset;
+	point3 position;
+	aabb bbox;
+
+};
+
+class move_bottom_to : public hittable {
+public:
+	move_bottom_to(shared_ptr<hittable> object, const point3& position)
+		: object(object), position(position)
+	{
+		double centerx = (object->bounding_box().x.max + object->bounding_box().x.min) / 2;
+		double miny = object->bounding_box().y.min;
+		double centerz = (object->bounding_box().z.max + object->bounding_box().z.min) / 2;
+
+		offset = position - vec3(centerx, miny, centerz);
+
+
+		bbox = object->bounding_box() + offset;
+	}
+
+	bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
+		//Move the ray backwards by the offset
+		ray offset_r(r.origin() - offset, r.direction(), r.time());
+
+		//Determine whether an intersection exists along the offset ray (and if so where)
+		if (!object->hit(offset_r, ray_t, rec))
+			return false;
+
+		//Move the intersection point forwards by the offset
+		rec.p += offset;
+
+		return true;
+	}
+
+	aabb bounding_box() const override { return bbox; }
+
+private:
+	shared_ptr<hittable> object;
+	vec3 offset;
+	point3 position;
+	aabb bbox;
+
+};
+
 #endif
