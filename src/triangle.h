@@ -9,6 +9,30 @@ public:
 		//Define Normal
 		auto n = cross(v1 - v0, v2 - v0);
 		normal = unit_vector(n);
+		vnA = normal;
+		vnB = normal;
+		vnC = normal;
+
+		D = dot(normal, A);
+
+		area = n.length();
+		set_bounding_box();
+	}
+
+	//Triangle Constructor with Texture Coordinates and Normals
+	triangle(point3 v0, double xtA, double ytA, vec3 vnA,
+		point3 v1, double xtB, double ytB, vec3 vnB,
+		point3 v2, double xtC, double ytC, vec3 vnC,
+		shared_ptr<material> mat)
+		: A(v0), B(v1), C(v2), mat(mat),
+		xtA(xtA), ytA(ytA), vnA(vnA),
+		xtB(xtB), ytB(ytB), vnB(vnB),
+		xtC(xtC), ytC(ytC), vnC(vnC) 
+	{
+
+		//Define Normal
+		auto n = cross(v1 - v0, v2 - v0);
+		normal = unit_vector(n);
 		D = dot(normal, A);
 
 		area = n.length();
@@ -24,6 +48,32 @@ public:
 		xtA(xtA), ytA(ytA),
 		xtB(xtB), ytB(ytB),
 		xtC(xtC), ytC(ytC)
+	{
+
+
+		//Define Normal
+		auto n = cross(v1 - v0, v2 - v0);
+		normal = unit_vector(n);
+		vnA = normal;
+		vnB = normal;
+		vnC = normal;
+
+		D = dot(normal, A);
+
+
+		area = n.length();
+		set_bounding_box();
+	}
+
+	//Triangle Constructor with Normals
+	triangle(point3 v0, vec3 vnA,
+		point3 v1, vec3 vnB,
+		point3 v2, vec3 vnC,
+		shared_ptr<material> mat)
+		: A(v0), B(v1), C(v2), mat(mat),
+		vnA(vnA),
+		vnB(vnB),
+		vnC(vnC)
 	{
 
 		//Define Normal
@@ -76,13 +126,23 @@ public:
 		vec3 CP = intersection - C;
 		Ne = cross((A - C), (CP));
 		if (dot(normal, Ne) < 0) return false; //P is on the Right side
-		
-
 
 
 		rec.t = t;
 		rec.p = intersection;
-		rec.set_face_normal(r, normal);
+		
+		//Find hitpoint normal based on barycentric linear combination of vertex normals. 
+		// Vertex normals will be face normals if no vertex normals are provided at construction
+		if (!(equals(vnA, vnB) && equals(vnC, normal))) {
+			vec3 hitpoint_normal = normal;
+			find_hitpoint_normal(rec.p, hitpoint_normal, A, B, C, vnA, vnB, vnC);
+			rec.set_face_normal(r, hitpoint_normal);
+		}
+		else {
+			//A little messy since it works without this if statement, but slightly optimized since
+			//the equals operation should be slightly faster than the dot opperators for the barycentric coords
+			rec.set_face_normal(r, normal);
+		}
 		get_triangle_uv(rec.p, rec.u, rec.v, A, B, C, xtA, xtB, xtC, ytA, ytB, ytC);		
 		rec.mat = mat;
 
@@ -101,6 +161,10 @@ private:
 	double xtA = 0.0, ytA = 0.0;
 	double xtB = 1.0, ytB = 0.0;
 	double xtC = 0.0, ytC = 1.0;
+	//Vertex normals, if not defined init as face normals
+	vec3 vnA;
+	vec3 vnB;
+	vec3 vnC;
 
 	static void calculate_barycentric(point3 p, point3 a, point3 b, point3 c, float &alpha, float &beta, float &gamma){
 		vec3 v0 = b - a;
@@ -125,7 +189,7 @@ private:
 		, double xtA, double xtB, double xtC,
 		double ytA, double ytB, double ytC
 	){
-		//If no tex data, look up making a genaric triangle uv mapping
+		//If no tex data, use a genaric triangle uv mapping
 		//if tex data -> barycentric coordinates, linear addition to find the UV values
 		//Add to the hit rec. u and v are passed as rec.u and rec.v
 		//We know P is in the triangle
@@ -134,6 +198,25 @@ private:
 		
 		u = alpha * xtA + beta * xtB + gamma * xtC;
 		v = alpha * ytA + beta * ytB + gamma * ytC;
+
+	}
+	static void find_hitpoint_normal(const point3& p, vec3& hitpoint_normal,
+		point3 A, point3 B, point3 C
+		, vec3 vnA, vec3 vnB, vec3 vnC
+		//Uses Barycentric Coodinates to get a smooth normal transition accross the triangle with vertex normals
+	) {
+		//If no normal data data, use face normal
+		//if normal data -> barycentric coordinates, linear addition to find the hitpoint normal
+		//Add to the hit rec. hitpoint normal
+		//We know P is in the triangle
+		float alpha, beta, gamma;
+		calculate_barycentric(p, A, B, C, alpha, beta, gamma);
+
+		hitpoint_normal = vec3(
+			alpha * vnA.x() + beta * vnB.x() + gamma * vnC.x(),
+			alpha * vnA.y() + beta * vnB.y() + gamma * vnC.y(),
+			alpha * vnA.z() + beta * vnB.z() + gamma * vnC.z()
+			);
 
 	}
 

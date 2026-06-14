@@ -88,6 +88,12 @@ inline vec3 operator*(const vec3& v, double t) {
 inline vec3 operator/(const vec3& v, double t) {
 	return (1/t) * v;
 }
+inline bool equals(const vec3& v1, const vec3& v2) {
+	if (v1.x() == v2.x() && v1.y() == v2.y() && v1.z() == v2.z()){
+		return true;
+	}
+	return false;
+}
 
 inline double dot(const vec3& u, const vec3& v) {
 	return u.e[0] * v.e[0]

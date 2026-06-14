@@ -456,9 +456,17 @@ void triangles(hittable_list& world, camera& cam) {
     cam.background = color(0.70, 0.80, 1.00);
 }
 
+
+
+
+
 void model_render(hittable_list& world, camera& cam, std::string objfilename, std::string texturefilename) {
     //Renders a model normalized along the x axis and centered at (0,0,0)
     if (!texturefilename.empty()) {
+        // Materials
+        auto light = make_shared<diffuse_light>(color(5));
+
+
         //if texture is provided
         auto texture = make_shared<image_texture>(texturefilename);
         auto tex_mat = make_shared<lambertian>(texture);
@@ -473,13 +481,17 @@ void model_render(hittable_list& world, camera& cam, std::string objfilename, st
         model_world_space = make_shared<normalize_bbox_x>(model_world_space);
         model_world_space = make_shared<move_center_to>(model_world_space, point3(0, 0, 0));
 
+        //sphere Light
+        world.add(make_shared<sphere>(point3(1, 1, 1), 0.5, light));
+        
+        
         world.add(model_world_space);
         world = hittable_list(make_shared<bvh_node>(world));
     }
     else {
     // Materials
     auto light_grey = make_shared<lambertian>(color(0.83, 0.83, 0.83));
-    
+    auto light = make_shared<diffuse_light>(color(5));
     // Model
     hittable_list model_object_space;
     load_obj(model_object_space, light_grey, MODELS_PATH + objfilename);
@@ -489,6 +501,10 @@ void model_render(hittable_list& world, camera& cam, std::string objfilename, st
     model_world_space = make_shared<normalize_bbox_x>(model_world_space);
     model_world_space = make_shared<move_center_to>(model_world_space, point3(0, 0, 0));
 
+    //sphere light
+    world.add(make_shared<sphere>(point3(1,1,1), 0.5, light));
+
+
     world.add(model_world_space);
     world = hittable_list(make_shared<bvh_node>(world));
     }
@@ -496,7 +512,7 @@ void model_render(hittable_list& world, camera& cam, std::string objfilename, st
     //Camera Settings
     cam.aspect_ratio = 1.0;
     cam.img_width = 500;
-    cam.samples_per_pixel = 100;
+    cam.samples_per_pixel = 5000;
     cam.max_depth = 50;
 
     cam.vfov = 50;
@@ -508,6 +524,11 @@ void model_render(hittable_list& world, camera& cam, std::string objfilename, st
     cam.background = color(0.70, 0.80, 1.00);
 }
 
+void model_render(hittable_list& world, camera& cam, std::string objfilename){
+    //Overload without texture
+    model_render(world, cam, objfilename, "");
+}
+
 void cornell_mesh(hittable_list& world, camera& cam) {
 
     //Scene
@@ -517,6 +538,15 @@ void cornell_mesh(hittable_list& world, camera& cam) {
     auto metalic = make_shared<metal>(color(0.7), 1.0);
     auto glass = make_shared<dielectric>(1.5);
 
+    auto texture = make_shared<image_texture>(TEXTURES_PATH + "agamer.jpg");
+    auto tex_mat = make_shared<lambertian>(texture);
+
+    //Light
+    auto light = make_shared<diffuse_light>(color(15, 15, 15));
+    world.add(make_shared<quad>(point3(343, 554, 332), vec3(-130, 0, 0), vec3(0, 0, -105), light));
+    
+
+
     world.add(make_shared<quad>(point3(555, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), green));
     world.add(make_shared<quad>(point3(0, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), red));
     world.add(make_shared<quad>(point3(0, 0, 0), vec3(555, 0, 0), vec3(0, 0, 555), white));
@@ -524,35 +554,33 @@ void cornell_mesh(hittable_list& world, camera& cam) {
     world.add(make_shared<quad>(point3(0, 0, 555), vec3(555, 0, 0), vec3(0, 555, 0), white));
 
 
-    shared_ptr<hittable> box1 = box(point3(0), point3(165, 330, 165), white);
+    shared_ptr<hittable> box1 = box(point3(0), point3(165, 330, 165), tex_mat);
     box1 = make_shared<rotate_y>(box1, 15);
     box1 = make_shared<translate>(box1, vec3(265, 0, 295));
     world.add(box1);
 
     hittable_list model_object_space;
-    load_obj(model_object_space, glass, MODELS_PATH + "bunny.obj");
+    load_obj(model_object_space, white, MODELS_PATH + "utah_teapot.obj");
     //BVH to help with preformance
     shared_ptr<hittable> model_world_space = make_shared<bvh_node>(model_object_space);
 
-    model_world_space = make_shared<scale>(model_world_space, 300.0);
-    //model_world_space = make_shared<rotate_z>(model_world_space, 6.0);
-    model_world_space = make_shared<rotate_y>(model_world_space, 180.0);
-    model_world_space = make_shared<translate>(model_world_space, vec3(150, 10, 405));
+    model_world_space = make_shared<normalize_bbox_x>(model_world_space);
+    model_world_space = make_shared<scale>(model_world_space, 200);
+
+    model_world_space = make_shared<move_bottom_to>(model_world_space, point3(190 , 0, 222.5));
+    ////model_world_space = make_shared<rotate_z>(model_world_space, 6.0);
+    //model_world_space = make_shared<rotate_y>(model_world_space, 180.0);
+    //model_world_space = make_shared<translate>(model_world_space, vec3(150, 10, 405));
+    
     world.add(model_world_space);
 
-    
-    //Light
-    auto light = make_shared<diffuse_light>(color(15, 15, 15));
-    world.add(make_shared<quad>(point3(343, 554, 332), vec3(-130, 0, 0), vec3(0, 0, -105), light));
 
     world = hittable_list(make_shared<bvh_node>(world));
-   
-
 
     //Camera Settings
     cam.aspect_ratio = 1.0;
-    cam.img_width = 600; //600
-    cam.samples_per_pixel = 500;
+    cam.img_width = 500; //600
+    cam.samples_per_pixel = 100;
     cam.max_depth = 50;
     cam.background = color(0);
 
@@ -668,8 +696,7 @@ int main(int argc, char* argv[]) {
     hittable_list world;
     camera cam;
 
-    
-    model_render(world, cam, "utah_teapot.obj", "agamer.jpg");
+    cornell_mesh(world, cam);
 
     
     if (argc > 1 && check_file_extention(argv[1])) {
