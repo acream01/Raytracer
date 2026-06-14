@@ -52,7 +52,7 @@ private:
 
 class image_texture : public texture {
 public:
-	image_texture(const char* filename) : image(filename) {}
+	image_texture(std::string filename) : image(filename.c_str()) {}
 
 	color value(double u, double v, const point3& p) const override {
 		// If we have no texture data, then return solid cyan as a debugging aid :)

@@ -456,36 +456,52 @@ void triangles(hittable_list& world, camera& cam) {
     cam.background = color(0.70, 0.80, 1.00);
 }
 
-void model_render(hittable_list& world, camera& cam) {
-    // Materials
-    auto red = make_shared<lambertian>(color(0.65, 0.05, 0.05));
-    auto white = make_shared<lambertian>(color(0.73, 0.73, 0.73));
-    auto green = make_shared<lambertian>(color(0.12, 0.45, 0.15));
+void model_render(hittable_list& world, camera& cam, std::string objfilename, std::string texturefilename) {
+    //Renders a model normalized along the x axis and centered at (0,0,0)
+    if (!texturefilename.empty()) {
+        //if texture is provided
+        auto texture = make_shared<image_texture>(texturefilename);
+        auto tex_mat = make_shared<lambertian>(texture);
+        
+        
+        // Model
+        hittable_list model_object_space;
+        load_obj(model_object_space, tex_mat, MODELS_PATH + objfilename);
+        //BVH to help with preformance
+        shared_ptr<hittable> model_world_space = make_shared<bvh_node>(model_object_space);
 
+        model_world_space = make_shared<normalize_bbox_x>(model_world_space);
+        model_world_space = make_shared<move_center_to>(model_world_space, point3(0, 0, 0));
+
+        world.add(model_world_space);
+        world = hittable_list(make_shared<bvh_node>(world));
+    }
+    else {
+    // Materials
+    auto light_grey = make_shared<lambertian>(color(0.83, 0.83, 0.83));
+    
     // Model
     hittable_list model_object_space;
-    load_obj(model_object_space, white, "./models/bunny.obj");
-
-    
+    load_obj(model_object_space, light_grey, MODELS_PATH + objfilename);
     //BVH to help with preformance
     shared_ptr<hittable> model_world_space = make_shared<bvh_node>(model_object_space);
 
     model_world_space = make_shared<normalize_bbox_x>(model_world_space);
+    model_world_space = make_shared<move_center_to>(model_world_space, point3(0, 0, 0));
 
-    
-    //model_world_space = make_shared<translate>(model_world_space, vec3(0, 0, 0));
     world.add(model_world_space);
     world = hittable_list(make_shared<bvh_node>(world));
+    }
 
-
+    //Camera Settings
     cam.aspect_ratio = 1.0;
     cam.img_width = 500;
-    cam.samples_per_pixel = 10;
+    cam.samples_per_pixel = 100;
     cam.max_depth = 50;
 
-    cam.vfov = 80;
-    cam.lookfrom = point3(0, 0.4, 2);
-    cam.lookat = point3(0, 0.2, 0);
+    cam.vfov = 50;
+    cam.lookfrom = point3(0, 0, 1.5);
+    cam.lookat = point3(0, 0, 0);
     cam.up = vec3(0, 1, 0);
 
     cam.defocus_angle = 0;
@@ -514,7 +530,7 @@ void cornell_mesh(hittable_list& world, camera& cam) {
     world.add(box1);
 
     hittable_list model_object_space;
-    load_obj(model_object_space, glass, "./models/bunny.obj");
+    load_obj(model_object_space, glass, MODELS_PATH + "bunny.obj");
     //BVH to help with preformance
     shared_ptr<hittable> model_world_space = make_shared<bvh_node>(model_object_space);
 
@@ -566,7 +582,7 @@ void sphere_mesh_example(hittable_list& world, camera& cam) {
     world.add(make_shared<sphere>(point3(4.0, 0, 2.0), 0.5, material_right));
     
     hittable_list model_object_space;
-    load_obj(model_object_space, metalic, "./models/bunny.obj");
+    load_obj(model_object_space, metalic, MODELS_PATH + "bunny.obj");
     //BVH to help with preformance
     //Bunny 
 
@@ -614,7 +630,7 @@ void log_and_spheres(hittable_list& world, camera & cam) {
     auto earth_texture = make_shared<image_texture>("treestumptex.png");
     auto earth_surface = make_shared<lambertian>(earth_texture);
     hittable_list model_object_space;
-    load_obj(model_object_space, earth_surface, "./models/treestump.obj");
+    load_obj(model_object_space, earth_surface, MODELS_PATH + "treestump.obj");
 
     //BVH to help with preformance
     shared_ptr<hittable> log = make_shared<bvh_node>(model_object_space);
@@ -653,7 +669,7 @@ int main(int argc, char* argv[]) {
     camera cam;
 
     
-    log_and_spheres(world, cam);
+    model_render(world, cam, "utah_teapot.obj", "agamer.jpg");
 
     
     if (argc > 1 && check_file_extention(argv[1])) {
