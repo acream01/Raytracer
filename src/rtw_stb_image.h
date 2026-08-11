@@ -31,13 +31,13 @@ public:
 		//Hunt for image file in some likely locations
 		if (imagedir && load(std::string(imagedir) + "/" + image_filename)) return;
 		if (load(filename)) return;
-		if (load("images/" + filename)) return;
-		if (load("../images/" + filename)) return;
-		if (load("../../images/" + filename)) return;
-		if (load("../../../images/" + filename)) return;
-		if (load("../../../../images/" + filename)) return;
-		if (load("../../../../../images/" + filename)) return;
-		if (load("../../../../../../images/" + filename)) return;
+		if (load("resources/textures/" + filename)) return;
+		if (load(TEXTURES_PATH + filename)) return;
+		if (load("../ "+ TEXTURES_PATH + filename)) return;
+		if (load("../../" + TEXTURES_PATH + filename)) return;
+		if (load("../../../" + TEXTURES_PATH + filename)) return;
+		if (load("../../../../" + TEXTURES_PATH + filename)) return;
+		if (load("../../../../../"+ TEXTURES_PATH + filename)) return;
 	
 		std::cerr << "ERROR: Could now load image file '" << image_filename << "'.\n";
 	}

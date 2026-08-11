@@ -16,6 +16,12 @@ using std::shared_ptr;
 const double infinity = std::numeric_limits<double>::infinity();
 const double pi = 3.1415926535897932385;
 
+#include <string>
+static const std::string RESOURCE_PATH = "./resources/";
+static const std::string MODELS_PATH = RESOURCE_PATH + "models/";
+static const std::string TEXTURES_PATH = RESOURCE_PATH + "textures/";
+static const std::string endl = "\n";
+
 //util
 
 inline double degrees_to_radians(double degrees) {

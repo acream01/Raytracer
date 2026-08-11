@@ -72,6 +72,13 @@ public:
 			return y.size() > z.size() ? 1 : 2;
 	}
 
+	void print_bbox() const {
+		std::cout << "bbox dimensions: " << '\n'
+			<< "Min X:  " << x.min << " | Max X:  " << x.max << '\n'
+			<< "Min Y:  " << y.min << " | Max Y:  " << y.max << '\n'
+			<< "Min Z:  " << z.min << " | Max Z:  " << z.max << '\n';
+	}
+
 	static const aabb empty, universe;
 private:
 	void pad_to_mininums() {

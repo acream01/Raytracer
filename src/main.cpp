@@ -16,9 +16,11 @@
 #include "material.h"
 #include "sphere.h"
 #include "quad.h"
+#include "triangle.h"
 #include "texture.h"
 
-
+#define TINYOBJLOADER_IMPLEMENTATION // define this in only *one* .cc
+#include "model_loader.h"
 
 // Scenes
 void bouncing_spheres(hittable_list& world, camera& cam) {
@@ -412,62 +414,318 @@ void final_scene(hittable_list& world, hittable_list& lights, camera& cam, int i
     
     }
 
-void atmostpheric_perspective(hittable_list& world, camera& cam) {
-    auto world_distance = 100000.0;
+void cornell_triangle(hittable_list& world, camera& cam) {
 
-    auto green = make_shared<lambertian>(color(0.2, 0.65, 0.2));
-    auto red = make_shared<lambertian>(color(0.65, 0.2, 0.2));
-    auto pink = make_shared<lambertian>(color(0.80, 0.5, 0.2));
+    //Scene
+    auto red = make_shared<lambertian>(color(0.65, 0.05, 0.05));
+    auto white = make_shared<lambertian>(color(0.73, 0.73, 0.73));
+    auto green = make_shared<lambertian>(color(0.12, 0.45, 0.15));
 
-    world.add(make_shared<quad>(point3(-500, 0, -world_distance), vec3(world_distance - 50000, 0, 0), vec3(0, 0, 2*world_distance), green)); //Ground
+    world.add(make_shared<quad>(point3(555, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), green));
+    world.add(make_shared<quad>(point3(0, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), red));
+    world.add(make_shared<quad>(point3(0, 0, 0), vec3(555, 0, 0), vec3(0, 0, 555), white));
+    world.add(make_shared<quad>(point3(555, 555, 555), vec3(-555, 0, 0), vec3(0, 0, -555), white));
+    world.add(make_shared<quad>(point3(0, 0, 555), vec3(555, 0, 0), vec3(0, 555, 0), white));
+
+    //Light
+    auto light = make_shared<diffuse_light>(color(15, 15, 15));
+    world.add(make_shared<quad>(point3(343, 554, 332), vec3(-130, 0, 0), vec3(0, 0, -105), light));
 
     
-    for (int i = -500; i < world_distance; i += 500){
-        auto ran = random_double();
+    world.add(make_shared<triangle>(point3(300, 178, -100), point3(400, 300, 300), point3(200, 100, 0),  white));
     
-    shared_ptr<hittable> box1 = box(point3(0), point3(150, 200 + 100*ran, 150), pink);
-    box1 = make_shared<rotate_y>(box1, 15);
-    box1 = make_shared<translate>(box1, vec3(i, 0, ran * 700));
-    world.add(box1);
-
-
-    }
-    
-
-    world.add(make_shared<sphere>(point3(world_distance, 0, 0), 50000, red));
-
 
     //Camera Settings
-    cam.aspect_ratio = 16.0/9.0;
-    cam.img_width = 400;
-    cam.samples_per_pixel = 200;
+    cam.aspect_ratio = 1.0;
+    cam.img_width = 600;
+    cam.samples_per_pixel = 100;
     cam.max_depth = 50;
-    cam.background = color(0.1, 0.2, 0.4);
+    cam.background = color(0);
 
-    cam.vfov = 85;
-    cam.lookfrom = point3(-500, 500, -300);
-    cam.lookat = point3(10000, 0, 0);
+    cam.vfov = 40;
+    cam.lookfrom = point3(278, 278, -800);
+    cam.lookat = point3(278, 278, 0);
     cam.up = vec3(0, 1, 0);
 
     cam.defocus_angle = 0;
+}
 
-    cam.atmos_perspective = world_distance;
+void triangles(hittable_list& world, camera& cam) {
+   
+    // Materials
+    auto red = make_shared<lambertian>(color(1.0, 0.2, 0.2));
+ 
+
+    // Triangle
+
+    world.add(make_shared<triangle>(point3(6, -5, -1), point3(0, 6, 3), point3(-6, -5, 4), red));
+
+
+    cam.aspect_ratio = 1.0;
+    cam.img_width = 400;
+    cam.samples_per_pixel = 10;
+    cam.max_depth = 50;
+
+    cam.vfov = 80;
+    cam.lookfrom = point3(0, 0, -9);
+    cam.lookat = point3(0, 0, 0);
+    cam.up = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+    cam.background = color(0.70, 0.80, 1.00);
 }
 
 
+
+
+
+void model_render(hittable_list& world, camera& cam, std::string objfilename, std::string texturefilename) {
+    //Renders a model normalized along the x axis and centered at (0,0,0)
+    if (!texturefilename.empty()) {
+        // Materials
+        auto light = make_shared<diffuse_light>(color(5));
+
+
+        //if texture is provided
+        auto texture = make_shared<image_texture>(texturefilename);
+        auto tex_mat = make_shared<lambertian>(texture);
+        
+        
+        // Model
+        hittable_list model_object_space;
+        load_obj(model_object_space, tex_mat, MODELS_PATH + objfilename);
+        //BVH to help with preformance
+        shared_ptr<hittable> model_world_space = make_shared<bvh_node>(model_object_space);
+
+        model_world_space = make_shared<normalize_bbox_x>(model_world_space);
+        model_world_space = make_shared<move_center_to>(model_world_space, point3(0, 0, 0));
+
+        //sphere Light
+        world.add(make_shared<sphere>(point3(1, 1, 1), 0.5, light));
+        
+        
+        world.add(model_world_space);
+        world = hittable_list(make_shared<bvh_node>(world));
+    }
+    else {
+    // Materials
+    auto light_grey = make_shared<lambertian>(color(0.83, 0.83, 0.83));
+    auto light = make_shared<diffuse_light>(color(5));
+    // Model
+    hittable_list model_object_space;
+    load_obj(model_object_space, light_grey, MODELS_PATH + objfilename);
+    //BVH to help with preformance
+    shared_ptr<hittable> model_world_space = make_shared<bvh_node>(model_object_space);
+
+    model_world_space = make_shared<normalize_bbox_x>(model_world_space);
+    model_world_space = make_shared<move_center_to>(model_world_space, point3(0, 0, 0));
+
+    //sphere light
+    world.add(make_shared<sphere>(point3(1,1,1), 0.5, light));
+
+
+    world.add(model_world_space);
+    world = hittable_list(make_shared<bvh_node>(world));
+    }
+
+    //Camera Settings
+    cam.aspect_ratio = 1.0;
+    cam.img_width = 500;
+    cam.samples_per_pixel = 5000;
+    cam.max_depth = 50;
+
+    cam.vfov = 50;
+    cam.lookfrom = point3(0, 0, 1.5);
+    cam.lookat = point3(0, 0, 0);
+    cam.up = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+    cam.background = color(0.70, 0.80, 1.00);
+}
+
+void model_render(hittable_list& world, camera& cam, std::string objfilename){
+    //Overload without texture
+    model_render(world, cam, objfilename, "");
+}
+
+void cornell_mesh(hittable_list& world, camera& cam) {
+
+    //Scene
+    auto red = make_shared<lambertian>(color(0.65, 0.05, 0.05));
+    auto white = make_shared<lambertian>(color(0.73, 0.73, 0.73));
+    auto green = make_shared<lambertian>(color(0.12, 0.45, 0.15));
+    auto metalic = make_shared<metal>(color(0.7), 1.0);
+    auto glass = make_shared<dielectric>(1.5);
+
+    auto texture = make_shared<image_texture>(TEXTURES_PATH + "agamer.jpg");
+    auto tex_mat = make_shared<lambertian>(texture);
+
+    //Light
+    auto light = make_shared<diffuse_light>(color(15, 15, 15));
+    world.add(make_shared<quad>(point3(343, 554, 332), vec3(-130, 0, 0), vec3(0, 0, -105), light));
+    
+
+
+    world.add(make_shared<quad>(point3(555, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), green));
+    world.add(make_shared<quad>(point3(0, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), red));
+    world.add(make_shared<quad>(point3(0, 0, 0), vec3(555, 0, 0), vec3(0, 0, 555), white));
+    world.add(make_shared<quad>(point3(555, 555, 555), vec3(-555, 0, 0), vec3(0, 0, -555), white));
+    world.add(make_shared<quad>(point3(0, 0, 555), vec3(555, 0, 0), vec3(0, 555, 0), white));
+
+
+    shared_ptr<hittable> box1 = box(point3(0), point3(165, 330, 165), tex_mat);
+    box1 = make_shared<rotate_y>(box1, 15);
+    box1 = make_shared<translate>(box1, vec3(265, 0, 295));
+    world.add(box1);
+
+    hittable_list model_object_space;
+    load_obj(model_object_space, white, MODELS_PATH + "utah_teapot.obj");
+    //BVH to help with preformance
+    shared_ptr<hittable> model_world_space = make_shared<bvh_node>(model_object_space);
+
+    model_world_space = make_shared<normalize_bbox_x>(model_world_space);
+    model_world_space = make_shared<scale>(model_world_space, 200);
+
+    model_world_space = make_shared<move_bottom_to>(model_world_space, point3(190 , 0, 222.5));
+    ////model_world_space = make_shared<rotate_z>(model_world_space, 6.0);
+    //model_world_space = make_shared<rotate_y>(model_world_space, 180.0);
+    //model_world_space = make_shared<translate>(model_world_space, vec3(150, 10, 405));
+    
+    world.add(model_world_space);
+
+
+    world = hittable_list(make_shared<bvh_node>(world));
+
+    //Camera Settings
+    cam.aspect_ratio = 1.0;
+    cam.img_width = 500; //600
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+    cam.background = color(0);
+
+    cam.vfov = 40;
+    cam.lookfrom = point3(278, 278, -800);
+    cam.lookat = point3(278, 278, 0);
+    cam.up = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+}
+
+void sphere_mesh_example(hittable_list& world, camera& cam) {
+    auto material_ground = make_shared<lambertian>(color(0.0, 0.8, 0.8));
+    auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
+    auto material_left = make_shared<dielectric>(1.50);
+    auto material_bubble = make_shared<dielectric>(1.00 / 1.50);
+    auto material_right = make_shared<metal>(color(0.8, 0.6, 0.2), 1.0);
+
+    auto white = make_shared<lambertian>(color(0.73, 0.73, 0.73));
+    auto metalic = make_shared<metal>(color(0.7), 0.0);
+    auto glass = make_shared<dielectric>(1.5);
+
+    world.add(make_shared<sphere>(point3(0, -100.5, -1), 100, material_ground));
+    world.add(make_shared<sphere>(point3(0, 0, -8), 7, material_center));
+    world.add(make_shared<sphere>(point3(-4.0, 0, -1.0), 1.0, material_left));
+    world.add(make_shared<sphere>(point3(-1.0, 0, -1.0), 0.4, material_bubble));
+    world.add(make_shared<sphere>(point3(4.0, 0, 2.0), 0.5, material_right));
+    
+    hittable_list model_object_space;
+    load_obj(model_object_space, metalic, MODELS_PATH + "bunny.obj");
+    //BVH to help with preformance
+    //Bunny 
+
+    shared_ptr<hittable> model_world_space = make_shared<bvh_node>(model_object_space);
+    model_world_space = make_shared<scale>(model_world_space, 3.0);
+    //model_world_space = make_shared<rotate_z>(model_world_space, 6.0);
+    model_world_space = make_shared<rotate_y>(model_world_space, 150.0);
+    model_world_space = make_shared<translate>(model_world_space, vec3(-2, -0.3, 2.5));
+    world.add(model_world_space);
+    
+
+    world = hittable_list(make_shared<bvh_node>(world));
+
+    //Camera Settings
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.img_width = 1080;
+    cam.samples_per_pixel = 1000;
+    cam.max_depth = 50;
+
+    cam.vfov = 20;
+    cam.lookfrom = point3(13, 2, 3);
+    cam.lookat = point3(0, 0, 0);
+    cam.up = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0.6;
+    cam.focus_dist = 15.0;
+    cam.background = color(0.70, 0.80, 1.00);
+}
+
+void log_and_spheres(hittable_list& world, camera & cam) {
+    // Materials
+    auto red = make_shared<lambertian>(color(0.65, 0.05, 0.05));
+    auto white = make_shared<lambertian>(color(0.73, 0.73, 0.73));
+    auto green = make_shared<lambertian>(color(0.12, 0.45, 0.15));
+    auto glass = make_shared<dielectric>(1.5);
+
+    //Ground plane
+    world.add(make_shared<quad>(point3(-500, 0, -500), vec3(1000, 0, 0), vec3(0, 0, 1000), white));
+
+    //Spheres
+    world.add(make_shared<sphere>(point3(-4, 10, -15), 10, green));
+    world.add(make_shared<sphere>(point3(14, 6, 15), 6, glass));
+    
+    // Model
+    auto earth_texture = make_shared<image_texture>("treestumptex.png");
+    auto earth_surface = make_shared<lambertian>(earth_texture);
+    hittable_list model_object_space;
+    load_obj(model_object_space, earth_surface, MODELS_PATH + "treestump.obj");
+
+    //BVH to help with preformance
+    shared_ptr<hittable> log = make_shared<bvh_node>(model_object_space);
+    log = make_shared<normalize_bbox_x>(log);
+    log = make_shared<scale>(log, 7);
+    log = make_shared<translate>(log, vec3(9, -1.28, -3));
+    log->bounding_box().print_bbox();
+    world.add(log);
+
+    log = make_shared<scale>(log, 1.4);
+    log = make_shared<rotate_y>(log, 15);
+    log = make_shared<translate>(log, vec3(9, -2.28, -3));
+    world.add(log);
+
+    //model_world_space = make_shared<translate>(model_world_space, vec3(0, 0, 0));
+    world = hittable_list(make_shared<bvh_node>(world));
+    
+
+
+    cam.aspect_ratio = 1.0;
+    cam.img_width = 500;
+    cam.samples_per_pixel = 10;
+    cam.max_depth = 50;
+
+    cam.vfov = 80;
+    cam.lookfrom = point3(-14, 14, 35);
+    cam.lookat = point3(0, 1, 0);
+    cam.up = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+    cam.background = color(0.70, 0.80, 1.00);
+}
 
 int main(int argc, char* argv[]) {
     hittable_list world;
     hittable_list lights;
     camera cam;
-    
-    
-    final_scene(world, lights, cam, 800, 5000, 50);
 
+    cornell_mesh(world, cam);
+
+    
     if (argc > 1 && check_file_extention(argv[1])) {
         cam.render(world, lights, argv[1]);
     }
-    else 
-        cam.render(world, lights, "output.png");
+    else {
+        cam.render(world, "output.png");
+    }
+
+}
 
 } 
