@@ -723,9 +723,7 @@ int main(int argc, char* argv[]) {
         cam.render(world, lights, argv[1]);
     }
     else {
-        cam.render(world, "output.png");
+        cam.render(world, lights, "output.png");
     }
-
-}
 
 } 
