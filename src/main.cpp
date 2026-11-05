@@ -438,8 +438,8 @@ int main(int argc, char* argv[]) {
     camera cam;
 
     
-    atmostpheric_perspective(world, cam);
-
+    //atmostpheric_perspective(world, cam);
+    checkered_spheres(world, cam);
 
     if (argc > 1 && check_file_extention(argv[1])) {
         cam.render(world, argv[1]);
