@@ -545,7 +545,7 @@ void model_render(hittable_list& world, camera& cam, std::string objfilename){
     model_render(world, cam, objfilename, "");
 }
 
-void cornell_mesh(hittable_list& world, camera& cam) {
+void cornell_mesh(hittable_list& world, hittable_list& lights, camera& cam) {
 
     //Scene
     auto red = make_shared<lambertian>(color(0.65, 0.05, 0.05));
@@ -554,13 +554,17 @@ void cornell_mesh(hittable_list& world, camera& cam) {
     auto metalic = make_shared<metal>(color(0.7), 1.0);
     auto glass = make_shared<dielectric>(1.5);
 
-    auto texture = make_shared<image_texture>(TEXTURES_PATH + "agamer.jpg");
-    auto tex_mat = make_shared<lambertian>(texture);
+    //auto texture = make_shared<image_texture>(TEXTURES_PATH + "agamer.jpg");
+    //auto tex_mat = make_shared<lambertian>(texture);
 
     //Light
     auto light = make_shared<diffuse_light>(color(15, 15, 15));
     world.add(make_shared<quad>(point3(343, 554, 332), vec3(-130, 0, 0), vec3(0, 0, -105), light));
     
+    //Light sources (Invisible areas for PDF to direct to)
+    auto empty_material = shared_ptr<material>();
+    lights.add(make_shared<quad>(point3(343, 554, 332), vec3(-130, 0, 0), vec3(0, 0, -105), empty_material));
+    lights.add(make_shared<sphere>(point3(190, 90, 190), 90, empty_material));
 
 
     world.add(make_shared<quad>(point3(555, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), green));
@@ -570,7 +574,8 @@ void cornell_mesh(hittable_list& world, camera& cam) {
     world.add(make_shared<quad>(point3(0, 0, 555), vec3(555, 0, 0), vec3(0, 555, 0), white));
 
 
-    shared_ptr<hittable> box1 = box(point3(0), point3(165, 330, 165), tex_mat);
+
+    shared_ptr<hittable> box1 = box(point3(0), point3(165, 330, 165), metalic);
     box1 = make_shared<rotate_y>(box1, 15);
     box1 = make_shared<translate>(box1, vec3(265, 0, 295));
     world.add(box1);
@@ -596,7 +601,7 @@ void cornell_mesh(hittable_list& world, camera& cam) {
     //Camera Settings
     cam.aspect_ratio = 1.0;
     cam.img_width = 500; //600
-    cam.samples_per_pixel = 100;
+    cam.samples_per_pixel = 10;
     cam.max_depth = 50;
     cam.background = color(0);
 
@@ -713,8 +718,8 @@ int main(int argc, char* argv[]) {
     hittable_list lights;
     camera cam;
 
-    cornell_mesh(world, cam);
-
+    cornell_mesh(world, lights, cam);
+    //final_scene(world, lights, cam, 400, 10, 30);
     
     if (argc > 1 && check_file_extention(argv[1])) {
         cam.render(world, lights, argv[1]);
