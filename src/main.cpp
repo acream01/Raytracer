@@ -462,7 +462,7 @@ int main(int argc, char* argv[]) {
     camera cam;
     
     
-    final_scene(world, lights, cam, 800, 5000, 50);
+    final_scene(world, lights, cam, 800, 100, 50);
 
     if (argc > 1 && check_file_extention(argv[1])) {
         cam.render(world, lights, argv[1]);
